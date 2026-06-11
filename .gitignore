@@ -5,3 +5,6 @@
 .vscode/
 AGENTS.md
 .claude/
+
+# full clone of browser-based-umoria; only engine/umoria.html is vendored
+_engine/

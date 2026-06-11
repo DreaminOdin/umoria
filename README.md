@@ -1,152 +1,100 @@
-# UMORIA — The Dungeons of Moria (Browser-Remake)
+# UMORIA — das echte Spiel im CRT-Look
 
-Ein Remake des Roguelike-Klassikers **Moria (1983)** von Robert A. Koeneke
-(bzw. Umoria von Jim E. Wilson) — komplett im Browser, mit authentischem
-**Phosphor-CRT-Look** im Stil von
-[cool-retro-term](https://github.com/Swordfish90/cool-retro-term):
-Scanlines, Bildschirmwölbung, Nachleuchten (Ghosting), Glow, Flackern,
-Rauschen und Rolling Bar — als WebGL-Shader.
+Das **originale Umoria** (aus [dungeons-of-moria/umoria](https://github.com/dungeons-of-moria/umoria))
+— vollständig und mit allen Originalmechaniken — im Browser, eingebettet in
+einen authentischen **Phosphor-CRT-Look** im Stil von
+[cool-retro-term](https://github.com/Swordfish90/cool-retro-term), mit
+80er-Chiptune-Soundtrack, Erzähler-Stimmen und einem Optionsmenü.
 
-![Genre](https://img.shields.io/badge/genre-roguelike-orange)
-![Tech](https://img.shields.io/badge/tech-vanilla%20JS%20%2B%20WebGL-blue)
+> **Wichtige Designentscheidung:** Frühere Versionen dieses Projekts waren ein
+> handgeschriebenes JavaScript-*Remake*. Ein Remake kann das Original nie
+> *exakt* abbilden — Diagonalbewegung, Item-Specs, die Karte, alle Monster,
+> Items, Formeln und Mechaniken. Deshalb läuft jetzt das **echte Umoria selbst**
+> (als WebAssembly/asm.js, kompiliert aus dem Originalquellcode), und mein Code
+> legt nur den Look, die Musik und meine persönlichen Wünsche darüber. Das alte
+> Remake liegt zur Referenz unter [legacy-remake/](legacy-remake/).
 
 ## Starten
 
-Einfach **`index.html` im Browser öffnen** — kein Build, kein Server nötig.
-(Optional: `npx serve` für einen lokalen Webserver.)
+`index.html` im Browser öffnen — kein Build, kein Server nötig (die Engine ist
+vollständig in die Datei eingebettet; Spielstände liegen in IndexedDB).
+Online: **https://dreaminodin.github.io/umoria/**
 
-## Das Spiel
+## Wie es funktioniert
 
-- **Ziel:** Steige 50 Ebenen (2500 Fuß) hinab und erschlage den **Balrog**.
-- **Charaktererschaffung** wie im Original: 8 Rassen, 4 Klassen (Warrior,
-  Mage, Priest, Rogue), ausgewürfelte Attribute.
-- **Stadt** mit 6 Läden (betreten durch die nummerierten Türen `1`–`6`):
-  Gemischtwaren, Rüstungen, Waffen, Tempel, Alchemist, Magier — mit den
-  Original-Händlern (Erick the Honest, Mauglin the Grumpy, Arndal
-  Beast-Slayer, Ludwig the Humble, Mauser the Chemist, Buzzby the Wizard).
-- **Feilschen** wie im Original: Der Händler nennt einen überhöhten Preis,
-  du machst Gegenangebote (Zahl tippen + ENTER, `a` = akzeptieren). Beim
-  Verkaufen umgekehrt. Wer den Händler mit Dreistangeboten beleidigt
-  (3 Strikes), fliegt raus — der Laden bleibt dann 500 Züge verriegelt.
-  Charisma beeinflusst die Preisbasis.
-- **Dungeon:** prozedural generierte Ebenen, Fallen, Geheimnisse, über 35
-  Monsterarten (Gift, Paralyse, Lebenskraft-Entzug, Diebe, Zauberer,
-  Drachenodem …).
-- **Licht ist Leben:** Fackeln brennen ab, Laternen brauchen Öl. Ohne Licht
-  siehst du in dunklen Gängen nichts.
-- **Hunger:** Iss, oder du verhungerst.
-- **Unidentifizierte Tränke & Schriftrollen** („Crimson Potion …was das wohl
-  ist?").
-- **Magie** für Mage und Priest (Magic Missile, Frost Bolt, Heilung, …).
-
-### Mehrere Leben
-
-Du hast **3 Leben**. Stirbst du, schleppen dich Tempel-Akolythen zurück zum
-Stadtplatz: **alles Gold und alle Gegenstände sind weg** — du behältst nur
-einen Dolch, einen kleinen Schild, ein paar Fackeln und etwas Proviant.
-Stufe und Erfahrung bleiben erhalten. Erst der dritte Tod ist endgültig —
-dann gibt's den klassischen Grabstein.
-
-Standardmäßig wechselt dabei die Bildschirmfarbe: zweites Leben **Purple**,
-drittes Leben **Rot** — man sieht also jederzeit, wie ernst es steht
-(im Optionsmenü abschaltbar).
+- **Engine:** [engine/umoria.html](engine/umoria.html) ist das vorkompilierte
+  echte Umoria. Es zeichnet seinen 80×24-Textbildschirm in versteckte
+  DOM-Zeilen (`<div id="screen">`).
+- **Hülle:** [js/bridge.js](js/bridge.js) liest dieses Zeichenraster Bild für
+  Bild aus und zeichnet es über [js/terminal.js](js/terminal.js) +
+  [js/crt.js](js/crt.js) (WebGL-CRT-Shader: Scanlines, Wölbung,
+  Nachleuchten, Glow, Flackern, Vignette) neu. So bekommt das echte Spiel den
+  Phosphor-Look. Tastatureingaben gehen direkt an die Engine.
+- **Build:** `node build-index.js` erzeugt `index.html` neu aus
+  `engine/umoria.html` + der Hülle (nützlich, wenn die Engine ausgetauscht wird).
 
 ## Steuerung
 
-Standard ist die **originale Umoria-Tastaturbelegung**; im Optionsmenü kann
-auf Rogue-like-Tasten (`hjkl`) umgeschaltet werden. `?` zeigt jederzeit die
-vollständige Befehlsliste der aktiven Belegung (auch auf dem Titelbildschirm).
+Es ist das **echte Umoria** — es gelten die Originaltasten. Im Spiel
+**`?` drücken für die vollständige Befehlsliste**, `H` für die Hilfe/Identität.
+Kurzüberblick:
+
+- **Bewegung:** Ziffern `1`–`9` wie auf dem Numpad — **inklusive Diagonalen
+  `7` `9` `1` `3`**. (Im Original auch `hjkl`/`yubn` im Rogue-like-Modus.)
+- `>` / `<` Treppe hinab/hinauf · `R` rasten · `s` suchen · `T` Tür/Graben
+- `i` Inventar · `e` Ausrüstung · `w` anlegen · `t` ablegen
+- `q` trinken · `r` lesen · `E` essen · `m`/`p` zaubern/beten
+- `M` Karte der Ebene · `L` Position · `C` Charakterbogen
+- In Läden: kaufen/verkaufen **mit Feilschen** (alles original)
+
+### Meine Zusatztasten (greifen nicht ins Spiel ein)
 
 | Taste | Aktion |
 |---|---|
-| Pfeile / Numpad `1`–`9` | Bewegen (8 Richtungen); `hjkl`/`yubn` im Rogue-like-Modus |
-| `5` oder `.` | Warten |
-| `>` / `<` | Treppe runter / rauf |
-| `M` | **Karte der Ebene** |
-| `L` | Position anzeigen (locate) |
-| `l` | Umsehen (look; im Rogue-like-Modus: `x`) |
-| `C` | Charakterbogen |
-| `o` / `c` | Tür öffnen / schließen (mit Richtung) |
-| `g` oder `,` | Aufheben |
-| `i` / `e` | Inventar / Ausrüstungsliste |
-| `w` / `t` | Anlegen / Ablegen |
-| `q` / `r` / `E` | Trank trinken / Schriftrolle lesen / Essen |
-| `F` | Laterne mit Öl füllen |
-| `m` / `p` | Zauber wirken (Mage) / Beten (Priest) |
-| `R` | Rasten |
-| `s` | Nach Fallen suchen |
-| `d` | Gegenstand fallen lassen |
-| `?` | Hilfe mit allen Tasten |
-| **ESC** oder `=` | **Optionsmenü** |
-| **Leertaste** | Menüs, Läden und Listen schließen (wichtig im Vollbild!) |
+| **F1** | Optionsmenü (auch per Zahnrad-Symbol oben rechts) |
 | **F2** | Phosphor-Farbe (Amber / Grün / Weiß) |
-| **F3** | Anzeige: CRT (authentisch) / Sharp (modern) |
+| **F3** | Anzeige: CRT (authentisch) ↔ Sharp (modern, gestochen scharf) |
 | **F4** | Musik an/aus |
-| **F11** | Vollbild (nur das Bild, ohne Rahmen) |
+| **F11** | Vollbild (nur das Bild) |
 
-## Optionsmenü (ESC)
+Die Einstellungen werden im Browser gespeichert (localStorage). Im Optionsmenü
+zusätzlich: **Dark/Light-Modus** für dunkle bzw. helle Räume.
 
-Alle Einstellungen werden im Browser gespeichert (localStorage):
+## Musik & Stimmen
 
-- **Display:** *CRT (authentic 1983)* — die volle Röhren-Optik — oder
-  *Sharp (modern)*: doppelte Render-Auflösung, gestochen scharf, ohne
-  CRT-Effekte.
-- **Phosphor colour:** Amber / Grün / Weiß.
-- **Screen colour per life:** Bildschirmfarbe wechselt mit jedem Leben —
-  Leben 1 normal, Leben 2 **Purple**, Leben 3 **Rot**. Alternativ
-  *Classic* (immer gleiche Farbe).
-- **Theme:** *Dark room* (klassisch dunkel) / *Light room* — helles
-  Papier-Display für Umgebungen mit viel Licht.
-- **Music:** Soundtrack an/aus.
-- **Key bindings:** *Original Umoria* / *Rogue-like (hjkl)*.
-- **Fullscreen:** echter Vollbildmodus ohne Rahmen (auch F11).
+- **Chiptune-Soundtrack im C64/SID-Stil**, live per WebAudio erzeugt
+  ([js/audio.js](js/audio.js)).
+- **Erzähler-Stimmen:** Beim Abstieg (jede 250-Fuß-Marke) wird ein
+  ~45-Sekunden-Ausschnitt aus `audio/voice/voice1.mp3` … `voice8.mp3`
+  eingespielt, die Musik duckt darunter weg. Mitgeliefert ist eine gemeinfreie
+  **LibriVox-Lesung von Beowulf** — das Epos, das Tolkien inspirierte. Eigene
+  (legal besessene) Tolkien-Hörbuch-Ausschnitte einfach als `voice2.mp3` usw.
+  dazulegen.
 
-> **ESC im Vollbild:** In **Chrome und Edge** fängt das Spiel die
-> ESC-Taste per Keyboard-Lock-API ein — ESC funktioniert dort auch im
-> Vollbild ganz normal im Spiel; **ESC gedrückt halten** (oder F11)
-> verlässt das Vollbild. In Browsern ohne diese API (Firefox, Safari)
-> verlässt der erste ESC-Druck das Vollbild — dort helfen **Leertaste**
-> (schließt Menüs/Läden) und **`=`** (Optionsmenü).
+## Status & geplante persönliche Wünsche
 
-## Musik & Sprache
+✅ **Phase 1 (fertig):** das echte, vollständige Umoria + CRT-Look + Phosphor-
+Farben + Dark/Light + Sharp/CRT + Vollbild + Chiptune + Beowulf-Stimmen +
+Optionsmenü.
 
-- **Chiptune-Soundtrack im C64/SID-Stil** (Arpeggios, Rechteck- und
-  Dreieck-Wellen), live per WebAudio erzeugt — keine Audiodateien nötig.
-- **Erzähler-Stimmen:** Beim Abstieg (alle 5 Ebenen-Meilensteine und
-  gelegentlich zufällig) werden ~45-Sekunden-Ausschnitte aus Audio-Clips in
-  `audio/voice/voice1.mp3` … `voice8.mp3` eingespielt, die Musik wird dabei
-  leiser gemischt. Mitgeliefert ist eine **gemeinfreie LibriVox-Lesung von
-  Beowulf** — dem Epos, das Tolkien maßgeblich inspirierte.
+🔜 **Phase 2 (geplant):** Damit auch die *gameplay-seitigen* Wünsche — **mehrere
+Leben** (Tod → zurück in die Stadt, alles weg außer Dolch/Schild/Fackeln),
+**Bildschirmfarbe pro Leben** (Leben 2 lila, Leben 3 rot) und das
+**„mellon"-Easter-Egg** — exakt im Originalspiel funktionieren, muss der
+C++-Quellcode der **neuesten** `dungeons-of-moria/umoria`-Version mit diesen
+Patches neu nach WebAssembly kompiliert werden (Emscripten-Toolchain). Das ist
+der nächste Schritt.
 
-> **Hinweis zu Tolkien-Originalaufnahmen:** Tolkiens eigene Lesungen
-> (Caedmon Records, aufgenommen 1952) sind **urheberrechtlich geschützt**
-> und nicht frei verfügbar. Wer sie besitzt (z. B. die *J.R.R. Tolkien Audio
-> Collection*), kann eigene Ausschnitte einfach als `voice2.mp3` usw. in
-> `audio/voice/` legen — sie werden automatisch erkannt. Weitere freie
-> Alternativen: [LibriVox](https://librivox.org/) (gemeinfreie Lesungen von
-> Beowulf, der Edda, Sigurd-Sagas, Kalevala u. a.).
+## Lizenz & Credits
 
-## Easter Egg
+Umoria steht unter der **GNU General Public License v3.0**; da die Engine
+mitgeliefert wird, gilt das auch für dieses Gesamtwerk. Siehe
+[engine/UMORIA-LICENSE](engine/UMORIA-LICENSE) und
+[engine/UMORIA-AUTHORS](engine/UMORIA-AUTHORS).
 
-*pedo mellon a minno.* — Wer die Inschrift der Tore von Durin kennt, weiß,
-was auf dem Titelbildschirm zu tippen ist …
-
-## Was (noch) fehlt gegenüber dem Original
-
-Dies ist ein **Remake in JavaScript**, kein Port des C++-Originalcodes
-([dungeons-of-moria/umoria](https://github.com/dungeons-of-moria/umoria) —
-wer 1:1 das Original im Browser will: [browser-based-umoria](https://github.com/jhirschberg70/browser-based-umoria)).
-Noch nicht nachgebaut sind u. a.: Zauberstäbe/Stäbe (wands/staves), Ringe
-und Amulette, Graben durch Adern (mining), Geheimtüren, Truhen, Fernkampf
-(Bögen/Wurfwaffen), Zauberbücher mit Lernsystem (`G`), Verfluchungen,
-Charakter-Vorgeschichte und die Highscore-Liste.
-
-## Credits
-
-- **Moria** (1983) — Robert A. Koeneke; **Umoria** — Jim E. Wilson
-  ([Quellcode](https://github.com/dungeons-of-moria/umoria))
+- **Moria** (1983) — Robert A. Koeneke; **Umoria** — Jim E. Wilson;
+  modernisiert von der [dungeons-of-moria](https://github.com/dungeons-of-moria/umoria)-Community
+- Browser-Port (asm.js/WASM): [browser-based-umoria](https://github.com/jhirschberg70/browser-based-umoria) von J. Hirschberg
 - CRT-Look inspiriert von [cool-retro-term](https://github.com/Swordfish90/cool-retro-term)
-- Schrift: [VT323](https://fonts.google.com/specimen/VT323) (Google Fonts)
-- Beowulf-Lesung: [LibriVox](https://librivox.org/beowulf-by-unknown/),
-  Public Domain
-- Dieses Remake ist ein Fan-Projekt, neu geschrieben in Vanilla-JavaScript.
+- Schrift [VT323](https://fonts.google.com/specimen/VT323) · Beowulf-Lesung [LibriVox](https://librivox.org/beowulf-by-unknown/) (Public Domain)
+- CRT-Shader, Chiptune, Bridge und Menü: dieses Projekt (GPL-3.0)

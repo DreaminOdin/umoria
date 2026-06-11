@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #000; display: grid; justify-content: center; align-content: center; height: 100vh; }
+  #screen { position: fixed; left: -100000px; top: 0; font: 22px monospace; }
+  #bezel { padding: 26px; border-radius: 28px; background: linear-gradient(145deg,#2b2b30,#0e0e10); }
+  #crt { display: block; border-radius: 16px; background:#000; }
+  #hint, #gear { display:none; }
+</style></head>
+<body>
+<div id="screen"></div>
+<div id="bezel"><canvas id="crt" width="800" height="480"></canvas></div>
+<div id="gear"></div><div id="hint"></div>
+<script>
+// Build a fake Umoria screen (dungeon view) so we can test the read->CRT path
+// without booting the WASM engine (which needs a real, non-headless browser).
+var sample = [
+"You see a Giant White Ant here.                                                 ",
+"  Fenwick                                                                       ",
+"  Human                  ####################                                   ",
+"  Warrior                #..................#       ########                    ",
+"                         #........a.........#########......#                    ",
+"  STR : 17               #..................+...........@..#                    ",
+"  INT :  9               #..........$.......#########..!.#                      ",
+"  WIS : 10               #####.###########          #....#                      ",
+"  DEX : 16                   #.#                     ####                       ",
+"  CON : 15           #########.########                                         ",
+"  CHR : 11           #.....k............#        ####################           ",
+"                     #..................#########.........d........#            ",
+"  LEV :  3           #........<.........+........#................>#            ",
+"  EXP :   42         #..................#        #................##            ",
+"  HP  : 24/24        ####################        ##################             ",
+"  AC  :  6                                                                      ",
+"  AU  :  130                                                                    ",
+"                                                                                ",
+"  Fuel: 2400                                                                    ",
+"  LIVES : 3                                                                     ",
+"                                                                                ",
+"                                                                                ",
+"                                                                                ",
+"Hungry                                                  150 feet                "
+];
+var sc = document.getElementById('screen');
+for (var i = 0; i < 24; i++) {
+  var d = document.createElement('div');
+  d.id = i;
+  d.textContent = sample[i] || '';
+  sc.appendChild(d);
+}
+var cur = document.createElement('div');
+cur.id = 'cursor'; cur.style.top = '0px'; cur.style.left = '0ch';
+cur.style.animationName = 'none';
+sc.appendChild(cur);
+</script>
+<script src="../js/settings.js"></script>
+<script src="../js/terminal.js"></script>
+<script src="../js/crt.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/bridge.js"></script>
+</body></html>
