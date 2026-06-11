@@ -486,7 +486,7 @@ Game.prototype.pickItem = function (title, filter, cb) {
 };
 Game.prototype.overlayKey = function (k) {
   var ui = this.ui;
-  if (k === 'Escape') { this.ui = null; return; }
+  if (k === 'Escape' || k === ' ') { this.ui = null; return; }
   if (ui.mode === 'inv' && k === 'i') { this.ui = null; return; }
   if (['map', 'char', 'equip', 'look'].indexOf(ui.mode) >= 0) { this.ui = null; return; }
   if (ui.mode === 'dir') {
@@ -558,7 +558,7 @@ Game.prototype.openMenu = function () {
 };
 Game.prototype.menuKey = function (k) {
   switch (k) {
-    case 'Escape': case '=': this.state = this.menuReturn; return;
+    case 'Escape': case '=': case ' ': this.state = this.menuReturn; return;
     case 'a':
       SETTINGS.display = SETTINGS.display === 'crt' ? 'sharp' : 'crt';
       SETTINGS.changed(); break;
@@ -600,8 +600,8 @@ Game.prototype.drawMenu = function () {
     t.str(17, y, rows[i][0] + ') ' + rows[i][1]);
     t.str(44, y, rows[i][2], false);
   }
-  t.str(17, 19, 'Shortcuts: F2 phosphor  F3 display  F4 music', true);
-  t.str(17, 20, 'ESC) back', true);
+  t.str(17, 19, 'In fullscreen: = opens this menu, SPACE cancels,', true);
+  t.str(17, 20, 'ESC leaves fullscreen.      SPACE or ESC) back', true);
 };
 
 Game.prototype.tryMove = function (dx, dy) {
@@ -1161,7 +1161,7 @@ Game.prototype.sellPrice = function (it) {
 };
 Game.prototype.storeKey = function (k) {
   var st = DATA.STORES[this.storeIdx];
-  if (k === 'Escape' || (k === 'q' && !this.storeUI)) {
+  if (k === 'Escape' || k === ' ' || (k === 'q' && !this.storeUI)) {
     if (this.storeUI) { this.storeUI = null; return; }
     this.state = 'play';
     this.msgQ = [];
@@ -1257,7 +1257,7 @@ Game.prototype.drawTitle = function () {
   if (this.blinkOn) t.center(19, '*** PRESS SPACE TO ENTER THE MINES ***');
   if (this.mellon) t.center(21, 'The Doors of Durin swing open for you, friend.');
   else t.center(21, 'pedo mellon a minno', true);
-  t.center(23, 'ESC options   ? help & keys   F11 fullscreen', true);
+  t.center(23, '= or ESC options   ? help & keys   F11 fullscreen', true);
 };
 Game.prototype.drawCharGen = function () {
   var t = this.term, cg = this.cg, i, y;
@@ -1418,7 +1418,7 @@ Game.prototype.drawOverlay = function () {
     for (i = 0; i < p.inv.length && y < 22; i++) {
       t.str(x0 + 3, y++, String.fromCharCode(97 + i) + ') ' + DATA.displayName(p.inv[i]).slice(0, 45));
     }
-    t.str(x0 + 2, 22, 'ESC to close', true);
+    t.str(x0 + 2, 22, 'SPACE) close', true);
   } else if (ui.mode === 'pick') {
     var h = Math.min(20, ui.list.length + 4);
     this.panel(x0, 1, w, h, ui.title);
@@ -1490,8 +1490,9 @@ Game.prototype.drawHelp = function () {
       '=  ESC   options menu              ?  this help',
       '',
       'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
+      'SPACE closes menus and stores. In fullscreen, ESC always',
+      'leaves fullscreen first -- use SPACE and = instead.',
       'Walk into a numbered town door to enter a store.',
-      'Your torch burns down -- buy spares. Eat or starve.',
       'The Balrog waits at 2500 feet. Good luck.'
     ];
   } else {
@@ -1511,8 +1512,9 @@ Game.prototype.drawHelp = function () {
       '=  ESC   options menu              ?  this help',
       '',
       'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
+      'SPACE closes menus and stores. In fullscreen, ESC always',
+      'leaves fullscreen first -- use SPACE and = instead.',
       'Walk into a numbered town door to enter a store.',
-      'Your torch burns down -- buy spares. Eat or starve.',
       'The Balrog waits at 2500 feet. Good luck.'
     ];
   }
@@ -1581,7 +1583,7 @@ Game.prototype.drawStore = function () {
       t.str(6, 8 + i, String.fromCharCode(97 + i) + ') ' +
         DATA.displayName(sit).slice(0, 40) + ' ... ' + this.sellPrice(sit) + ' au');
     }
-    t.str(4, 23, 'ESC) back');
+    t.str(4, 23, 'SPACE) back');
   } else {
     for (i = 0; i < st.stock.length; i++) {
       var key = st.stock[i], tm = DATA.ITEMS[key];
@@ -1591,8 +1593,8 @@ Game.prototype.drawStore = function () {
       t.str(6, 7 + i, String.fromCharCode(97 + i) + ') ' + label + ' ' + dots + ' ' +
         U.pad(this.buyPrice(key), 5) + ' au', this.storeUI !== 'buy');
     }
-    if (this.storeUI === 'buy') t.str(4, 21, 'Purchase which item? (ESC to cancel)');
-    else t.str(4, 21, 'p) purchase   s) sell   ESC) leave the store');
+    if (this.storeUI === 'buy') t.str(4, 21, 'Purchase which item? (SPACE to cancel)');
+    else t.str(4, 21, 'p) purchase   s) sell   SPACE) leave the store');
   }
 };
 Game.prototype.drawLostLife = function () {

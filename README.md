@@ -71,6 +71,7 @@ vollständige Befehlsliste der aktiven Belegung (auch auf dem Titelbildschirm).
 | `d` | Gegenstand fallen lassen |
 | `?` | Hilfe mit allen Tasten |
 | **ESC** oder `=` | **Optionsmenü** |
+| **Leertaste** | Menüs, Läden und Listen schließen (wichtig im Vollbild!) |
 | **F2** | Phosphor-Farbe (Amber / Grün / Weiß) |
 | **F3** | Anzeige: CRT (authentisch) / Sharp (modern) |
 | **F4** | Musik an/aus |
@@ -92,6 +93,12 @@ Alle Einstellungen werden im Browser gespeichert (localStorage):
 - **Music:** Soundtrack an/aus.
 - **Key bindings:** *Original Umoria* / *Rogue-like (hjkl)*.
 - **Fullscreen:** echter Vollbildmodus ohne Rahmen (auch F11).
+
+> **ESC im Vollbild:** Browser reservieren ESC fürs Verlassen des
+> Vollbilds — das lässt sich nicht abschalten. Deshalb gilt im Vollbild:
+> **Leertaste** schließt Menüs/Läden, **`=`** öffnet das Optionsmenü,
+> und der erste ESC-Druck verlässt nur das Vollbild (der zweite wirkt
+> dann wieder im Spiel).
 
 ## Musik & Sprache
 

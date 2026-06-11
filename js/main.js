@@ -52,12 +52,22 @@
     applySettings();
     resize();
     window.addEventListener('resize', resize);
-    document.addEventListener('fullscreenchange', resize);
-    document.addEventListener('webkitfullscreenchange', resize);
+    function onFsChange() {
+      resize();
+      if (isFullscreen() && (game.state === 'play' || game.state === 'store')) {
+        game.msg('[Fullscreen: SPACE closes menus, = options, ESC leaves fullscreen]');
+        game.dirty = true;
+      }
+    }
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
 
     window.addEventListener('keydown', function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'F5' || e.key === 'F12') return;
+      // In fullscreen the browser reserves ESC for leaving fullscreen; don't
+      // also trigger the in-game ESC action. SPACE serves as cancel instead.
+      if (e.key === 'Escape' && isFullscreen()) return;
       if (e.key === 'F11') { // run fullscreen through our own toggle
         e.preventDefault();
         toggleFullscreen();
