@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UMORIA &mdash; The Dungeons of Moria</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #070708; overflow: hidden; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, #18181c 0%, #060607 75%);
+  }
+  #bezel {
+    padding: 28px; border-radius: 30px;
+    background: linear-gradient(145deg, #2b2b30, #0e0e10);
+    box-shadow: 0 10px 70px #000, inset 0 0 22px rgba(0,0,0,.95);
+  }
+  #screen { display: block; border-radius: 16px; background: #000; }
+</style>
+</head>
+<body>
+<div id="bezel"><canvas id="screen"></canvas></div>
+<script src="js/util.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/crt.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/data.js"></script>
+<script src="js/dungeon.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

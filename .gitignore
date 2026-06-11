@@ -1,0 +1,7 @@
+# SAP extension leftovers, unrelated to this game
+.github/agents/
+.github/skills/
+.github/.sap-adt-version.json
+.vscode/
+AGENTS.md
+.claude/
