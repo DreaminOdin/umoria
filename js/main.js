@@ -1,6 +1,5 @@
-// main.js -- bootstrap: canvas sizing, input wiring, render loop
+// main.js -- bootstrap: canvas sizing, settings wiring, input, render loop
 (function () {
-  var SRC_W = 800, SRC_H = 480;
   var started = false;
 
   function start() {
@@ -13,10 +12,26 @@
     try { crt = new CRT(canvas, term.canvas); } catch (e) { /* effects unavailable */ }
     var game = new Game(term);
 
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+    function toggleFullscreen() {
+      if (isFullscreen()) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        var el = document.documentElement;
+        (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      }
+    }
+    game.onToggleFullscreen = toggleFullscreen;
+
     function resize() {
-      var availW = window.innerWidth - 110, availH = window.innerHeight - 110;
-      var scale = Math.max(0.4, Math.min(availW / SRC_W, availH / SRC_H));
-      var w = Math.floor(SRC_W * scale), h = Math.floor(SRC_H * scale);
+      var fs = isFullscreen();
+      document.body.classList.toggle('fs', fs);
+      var availW = window.innerWidth - (fs ? 0 : 110);
+      var availH = window.innerHeight - (fs ? 0 : 110);
+      var scale = Math.max(0.4, Math.min(availW / 800, availH / 480));
+      var w = Math.floor(800 * scale), h = Math.floor(480 * scale);
       canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
       var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -24,16 +39,50 @@
       canvas.height = Math.floor(h * dpr);
       game.dirty = true;
     }
+
+    function applySettings() {
+      term.theme = SETTINGS.theme;
+      term.setScale(SETTINGS.display === 'sharp' ? 2 : 1);
+      if (crt) crt.enabled = SETTINGS.display === 'crt';
+      document.body.classList.toggle('light', SETTINGS.theme === 'light');
+      if (window.AudioSys) AudioSys.setMusic(SETTINGS.music);
+      game.dirty = true;
+    }
+    SETTINGS.onChange = applySettings;
+    applySettings();
     resize();
     window.addEventListener('resize', resize);
+    document.addEventListener('fullscreenchange', resize);
+    document.addEventListener('webkitfullscreenchange', resize);
 
     window.addEventListener('keydown', function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key === 'F5' || e.key === 'F11' || e.key === 'F12') return;
-      if (window.AudioSys) AudioSys.unlock();
-      if (e.key === 'F2') { term.cyclePhosphor(); game.dirty = true; e.preventDefault(); return; }
-      if (e.key === 'F3') { if (crt) crt.enabled = !crt.enabled; game.dirty = true; e.preventDefault(); return; }
-      if (e.key === 'F4') { if (window.AudioSys) AudioSys.toggleMusic(); e.preventDefault(); return; }
+      if (e.key === 'F5' || e.key === 'F12') return;
+      if (e.key === 'F11') { // run fullscreen through our own toggle
+        e.preventDefault();
+        toggleFullscreen();
+        return;
+      }
+      if (window.AudioSys) { AudioSys.unlock(); AudioSys.setMusic(SETTINGS.music); }
+      if (e.key === 'F2') {
+        var cyc = Terminal.CYCLE;
+        SETTINGS.phosphor = cyc[(cyc.indexOf(SETTINGS.phosphor) + 1) % cyc.length];
+        SETTINGS.changed();
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'F3') {
+        SETTINGS.display = SETTINGS.display === 'crt' ? 'sharp' : 'crt';
+        SETTINGS.changed();
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'F4') {
+        SETTINGS.music = !SETTINGS.music;
+        SETTINGS.changed();
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       game.handleKey(e);
       game.dirty = true;

@@ -19,11 +19,25 @@
     box-shadow: 0 10px 70px #000, inset 0 0 22px rgba(0,0,0,.95);
   }
   #screen { display: block; border-radius: 16px; background: #000; }
+
+  /* light theme: for playing in a bright room */
+  body.light { background: radial-gradient(ellipse at center, #cfc9bb 0%, #a8a193 75%); }
+  body.light #bezel {
+    background: linear-gradient(145deg, #d9d3c5, #b1aa9c);
+    box-shadow: 0 10px 50px rgba(0,0,0,.35), inset 0 0 16px rgba(0,0,0,.25);
+  }
+  body.light #screen { background: #e9e2d0; }
+
+  /* fullscreen: nothing but the picture */
+  body.fs #bezel { padding: 0; border-radius: 0; box-shadow: none; background: #000; }
+  body.fs.light #bezel { background: #e9e2d0; }
+  body.fs #screen { border-radius: 0; }
 </style>
 </head>
 <body>
 <div id="bezel"><canvas id="screen"></canvas></div>
 <script src="js/util.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/terminal.js"></script>
 <script src="js/crt.js"></script>
 <script src="js/audio.js"></script>

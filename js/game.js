@@ -23,6 +23,8 @@ function Game(term) {
   this.vis = {};
   this.titleBuf = '';
   this.mellon = false;   // Doors of Durin easter egg
+  this.menuReturn = 'title';
+  this.onToggleFullscreen = null; // wired up by main.js
   DATA.initIdentities();
 }
 
@@ -332,6 +334,8 @@ Game.prototype.handleKey = function (e) {
     case 'chargen': this.chargenKey(k, e); break;
     case 'play': this.playKey(k); break;
     case 'store': this.storeKey(k); break;
+    case 'menu': this.menuKey(k); break;
+    case 'help': this.state = this.menuReturn; break;
     case 'lostlife': if (k === ' ' || k === 'Enter') this.respawn(); break;
     case 'dead': if (k === ' ' || k === 'Enter') this.resetToTitle(); break;
     case 'win': this.state = 'play'; break;
@@ -339,6 +343,8 @@ Game.prototype.handleKey = function (e) {
 };
 Game.prototype.titleKey = function (k) {
   if (k === ' ' || k === 'Enter') { this.startCharGen(); return; }
+  if (k === 'Escape' || k === '=') { this.openMenu(); return; }
+  if (k === '?') { this.menuReturn = 'title'; this.state = 'help'; return; }
   if (/^[a-z]$/i.test(k)) {
     this.titleBuf = (this.titleBuf + k.toLowerCase()).slice(-12);
     if (this.titleBuf.indexOf('mellon') >= 0 && !this.mellon) {
@@ -373,18 +379,30 @@ Game.prototype.chargenKey = function (k, e) {
   }
 };
 
-var DIRS = {
+// arrows and number keys move in both key modes (Umoria "original" commands);
+// hjklyubn move only in rogue-like mode, where they shadow some commands.
+var DIRS_COMMON = {
   ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
-  h: [-1, 0], l: [1, 0], k: [0, -1], j: [0, 1],
-  y: [-1, -1], u: [1, -1], b: [-1, 1], n: [1, 1],
   '4': [-1, 0], '6': [1, 0], '8': [0, -1], '2': [0, 1],
   '7': [-1, -1], '9': [1, -1], '1': [-1, 1], '3': [1, 1]
+};
+var DIRS_ROGUE = {
+  h: [-1, 0], l: [1, 0], k: [0, -1], j: [0, 1],
+  y: [-1, -1], u: [1, -1], b: [-1, 1], n: [1, 1]
+};
+
+Game.prototype.moveDir = function (k) {
+  if (DIRS_COMMON[k]) return DIRS_COMMON[k];
+  if (SETTINGS.keys === 'roguelike' && DIRS_ROGUE[k]) return DIRS_ROGUE[k];
+  return null;
 };
 
 Game.prototype.playKey = function (k) {
   if (this.ui) { this.overlayKey(k); return; }
+  if (k === 'Escape' || k === '=') { this.openMenu(); return; }
   this.msgQ = [];
   var p = this.p;
+  var rogue = SETTINGS.keys === 'roguelike';
 
   if (p.timers.para > 0) {
     this.msg('You are paralyzed!');
@@ -392,8 +410,9 @@ Game.prototype.playKey = function (k) {
     return;
   }
   var acted = false;
-  if (DIRS[k]) {
-    acted = this.tryMove(DIRS[k][0], DIRS[k][1]);
+  var dir = this.moveDir(k);
+  if (dir) {
+    acted = this.tryMove(dir[0], dir[1]);
   } else {
     switch (k) {
       case '5': case '.': acted = true; break; // wait
@@ -401,7 +420,13 @@ Game.prototype.playKey = function (k) {
       case '<': this.takeStairs(-1); break;
       case 'g': case ',': acted = this.pickup(); break;
       case 'i': this.ui = { mode: 'inv' }; break;
+      case 'e': this.ui = { mode: 'equip' }; break;
       case '?': this.ui = { mode: 'help' }; break;
+      case 'M': this.ui = { mode: 'map' }; break;
+      case 'L': this.locate(); break;
+      case 'C': this.ui = { mode: 'char' }; break;
+      case 'o': this.ui = { mode: 'dir', action: 'open', title: 'Open -- which direction?' }; break;
+      case 'c': this.ui = { mode: 'dir', action: 'close', title: 'Close -- which direction?' }; break;
       case 'w': this.pickItem('Wear or wield which item?', function (it) {
         return it.kind === 'weapon' || it.kind === 'armor' || it.kind === 'light';
       }, this.wieldFromInv.bind(this)); break;
@@ -411,12 +436,45 @@ Game.prototype.playKey = function (k) {
       case 'r': this.pickItem('Read which scroll?', function (it) { return it.kind === 'scroll'; }, this.readItem.bind(this)); break;
       case 'E': this.pickItem('Eat what?', function (it) { return it.kind === 'food'; }, this.eatItem.bind(this)); break;
       case 'F': acted = this.refuel(); break;
-      case 'm': this.openSpells(); break;
+      case 'm': // cast magic spell (mages); priests pray with 'p'
+        if (this.p.cls.name === 'Priest') this.msg('Pray for guidance instead. (p)');
+        else this.openSpells();
+        break;
+      case 'p':
+        if (this.p.cls.name === 'Priest') this.openSpells();
+        else this.msg('Your prayers go unanswered.');
+        break;
       case 'R': this.rest(); break;
       case 's': acted = this.search(); break;
+      case 'x': if (rogue) this.lookAround(); break;
     }
+    if (k === 'l' && !rogue) this.lookAround(); // original keys: l = look
   }
   if (acted && this.state === 'play') this.passTurn();
+};
+Game.prototype.locate = function () {
+  var p = this.p;
+  if (this.depth === 0) { this.msg('You are in the town of Moria.'); return; }
+  this.msg('You are at level position (' + p.x + ',' + p.y + '), ' +
+    (this.depth * 50) + ' feet below the surface.');
+};
+Game.prototype.lookAround = function () {
+  var seen = [], p = this.p, i;
+  var ms = this.level.monsters;
+  for (i = 0; i < ms.length; i++) {
+    var m = ms[i];
+    if (this.vis[m.x + ',' + m.y]) seen.push(m.d.name + ' (' + m.d.ch + ')');
+  }
+  var its = this.level.items;
+  for (i = 0; i < its.length; i++) {
+    var en = its[i];
+    if (this.vis[en.x + ',' + en.y] && !(en.x === p.x && en.y === p.y)) {
+      seen.push(en.item.kind === 'gold' ? 'some gold ($)' :
+        DATA.displayName(en.item) + ' (' + DATA.itemChar(en.item) + ')');
+    }
+  }
+  if (!seen.length) { this.msg('You see nothing of interest.'); return; }
+  this.ui = { mode: 'look', list: seen };
 };
 Game.prototype.pickItem = function (title, filter, cb) {
   var list = [];
@@ -430,6 +488,17 @@ Game.prototype.overlayKey = function (k) {
   var ui = this.ui;
   if (k === 'Escape') { this.ui = null; return; }
   if (ui.mode === 'inv' && k === 'i') { this.ui = null; return; }
+  if (['map', 'char', 'equip', 'look'].indexOf(ui.mode) >= 0) { this.ui = null; return; }
+  if (ui.mode === 'dir') {
+    this.ui = null;
+    var d = DIRS_COMMON[k] || DIRS_ROGUE[k];
+    if (d) {
+      this.msgQ = [];
+      var actedD = ui.action === 'open' ? this.doOpen(d[0], d[1]) : this.doClose(d[0], d[1]);
+      if (actedD && this.state === 'play') this.passTurn();
+    }
+    return;
+  }
   if (ui.mode === 'help' || ui.mode === 'inv') return;
   this.msgQ = [];
   var i = 'abcdefghijklmnopqrstuv'.indexOf(k);
@@ -461,6 +530,80 @@ Game.prototype.equippedSlots = function () {
 };
 
 // ------------------------------------------------------------- actions
+Game.prototype.doOpen = function (dx, dy) {
+  var T = tiles(), x = this.p.x + dx, y = this.p.y + dy, t = this.tileAt(x, y);
+  if (t === T.DOORC) { this.level.map[y][x] = T.DOORO; this.msg('You open the door.'); return true; }
+  if (t === T.DOORO) { this.msg('It is already open.'); return false; }
+  this.msg('You see nothing there to open.');
+  return false;
+};
+Game.prototype.doClose = function (dx, dy) {
+  var T = tiles(), x = this.p.x + dx, y = this.p.y + dy, t = this.tileAt(x, y);
+  if (t === T.DOORO) {
+    if (this.monsterAt(x, y) || this.itemIdxAt(x, y) >= 0) { this.msg('Something is in the way.'); return false; }
+    this.level.map[y][x] = T.DOORC;
+    this.msg('You close the door.');
+    this.computeVisible();
+    return true;
+  }
+  if (t === T.DOORC) { this.msg('It is already closed.'); return false; }
+  this.msg('You see nothing there to close.');
+  return false;
+};
+
+// ----------------------------------------------------------- options menu
+Game.prototype.openMenu = function () {
+  this.menuReturn = this.state;
+  this.state = 'menu';
+};
+Game.prototype.menuKey = function (k) {
+  switch (k) {
+    case 'Escape': case '=': this.state = this.menuReturn; return;
+    case 'a':
+      SETTINGS.display = SETTINGS.display === 'crt' ? 'sharp' : 'crt';
+      SETTINGS.changed(); break;
+    case 'b':
+      var cyc = Terminal.CYCLE;
+      SETTINGS.phosphor = cyc[(cyc.indexOf(SETTINGS.phosphor) + 1) % cyc.length];
+      SETTINGS.changed(); break;
+    case 'c':
+      SETTINGS.lifeColors = !SETTINGS.lifeColors;
+      SETTINGS.changed(); break;
+    case 'd':
+      SETTINGS.theme = SETTINGS.theme === 'dark' ? 'light' : 'dark';
+      SETTINGS.changed(); break;
+    case 'e':
+      SETTINGS.music = !SETTINGS.music;
+      SETTINGS.changed(); break;
+    case 'f':
+      SETTINGS.keys = SETTINGS.keys === 'original' ? 'roguelike' : 'original';
+      SETTINGS.changed(); break;
+    case 'g':
+      if (this.onToggleFullscreen) this.onToggleFullscreen();
+      break;
+  }
+};
+Game.prototype.drawMenu = function () {
+  var t = this.term;
+  this.panel(14, 2, 52, 20, 'OPTIONS');
+  var rows = [
+    ['a', 'Display', SETTINGS.display === 'crt' ? 'CRT (authentic 1983)' : 'Sharp (modern, crisp)'],
+    ['b', 'Phosphor colour', SETTINGS.phosphor.charAt(0).toUpperCase() + SETTINGS.phosphor.slice(1)],
+    ['c', 'Screen colour per life', SETTINGS.lifeColors ? 'Per life (purple/red)' : 'Classic (always same)'],
+    ['d', 'Theme', SETTINGS.theme === 'dark' ? 'Dark room' : 'Light room'],
+    ['e', 'Music', SETTINGS.music ? 'On' : 'Off'],
+    ['f', 'Key bindings', SETTINGS.keys === 'original' ? 'Original Umoria' : 'Rogue-like (hjkl)'],
+    ['g', 'Fullscreen', 'toggle (or press F11)']
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    var y = 4 + i * 2;
+    t.str(17, y, rows[i][0] + ') ' + rows[i][1]);
+    t.str(44, y, rows[i][2], false);
+  }
+  t.str(17, 19, 'Shortcuts: F2 phosphor  F3 display  F4 music', true);
+  t.str(17, 20, 'ESC) back', true);
+};
+
 Game.prototype.tryMove = function (dx, dy) {
   var p = this.p, T = tiles();
   var nx = p.x + dx, ny = p.y + dy;
@@ -1072,6 +1215,15 @@ Game.prototype.storeKey = function (k) {
 
 // ================================================================ DRAWING
 Game.prototype.render = function () {
+  // screen colour: classic phosphor, or tinted by remaining lives
+  var ph = SETTINGS.phosphor;
+  if (SETTINGS.lifeColors && this.p) {
+    if (this.p.lives === 2) ph = 'purple';
+    else if (this.p.lives <= 1) ph = 'red';
+  }
+  this.term.phosphor = ph;
+  this.term.theme = SETTINGS.theme;
+
   this.term.clear();
   switch (this.state) {
     case 'title': this.drawTitle(); break;
@@ -1079,6 +1231,10 @@ Game.prototype.render = function () {
     case 'play': this.drawPlay(); break;
     case 'win': this.drawPlay(); this.drawWin(); break;
     case 'store': this.drawStore(); break;
+    case 'menu':
+      if (this.menuReturn === 'play') this.drawPlay();
+      this.drawMenu(); break;
+    case 'help': this.drawHelp(); break;
     case 'lostlife': this.drawLostLife(); break;
     case 'dead': this.drawTomb(); break;
   }
@@ -1101,7 +1257,7 @@ Game.prototype.drawTitle = function () {
   if (this.blinkOn) t.center(19, '*** PRESS SPACE TO ENTER THE MINES ***');
   if (this.mellon) t.center(21, 'The Doors of Durin swing open for you, friend.');
   else t.center(21, 'pedo mellon a minno', true);
-  t.center(23, 'F2 phosphor   F3 CRT   F4 music   ? help (in game)', true);
+  t.center(23, 'ESC options   ? help & keys   F11 fullscreen', true);
 };
 Game.prototype.drawCharGen = function () {
   var t = this.term, cg = this.cg, i, y;
@@ -1287,29 +1443,131 @@ Game.prototype.drawOverlay = function () {
       t.str(x0 + 3, y++, String.fromCharCode(97 + i) + ') ' + sp.name +
         '  (mana ' + sp.mana + ', lvl ' + sp.lvl + ')', locked);
     }
+  } else if (ui.mode === 'equip') {
+    var sl2 = this.equippedSlots();
+    this.panel(x0, 1, w, Math.max(6, sl2.length + 5), 'Equipment');
+    y = 3;
+    if (!sl2.length) t.str(x0 + 3, y, 'You are using nothing at all.');
+    for (i = 0; i < sl2.length; i++) {
+      t.str(x0 + 3, y++, (sl2[i] + '       ').slice(0, 8) + DATA.displayName(p.eq[sl2[i]]).slice(0, 40));
+    }
+  } else if (ui.mode === 'char') {
+    this.drawCharSheet();
+  } else if (ui.mode === 'map') {
+    this.drawMap();
+  } else if (ui.mode === 'look') {
+    var n = Math.min(16, ui.list.length);
+    this.panel(x0, 1, w, n + 4, 'You can see:');
+    for (i = 0; i < n; i++) t.str(x0 + 3, 3 + i, ui.list[i].slice(0, 46));
+  } else if (ui.mode === 'dir') {
+    this.panel(20, 10, 40, 3, '');
+    t.str(22, 11, ui.title);
   } else if (ui.mode === 'help') {
-    this.panel(13, 1, 67, 22, 'Commands');
-    var L = [
-      'MOVE    arrows / hjkl / yubn (diagonals) / numpad',
-      '5 or .  wait one turn',
-      '>  <    descend / ascend staircase',
-      'g or ,  pick up item        d  drop item',
-      'i       inventory           w  wear / wield',
-      't       take something off  F  refill lantern (oil)',
-      'q       quaff a potion      r  read a scroll',
-      'E       eat some food       s  search for traps',
-      'm       cast a spell (Mage / Priest)',
-      'R       rest until healed or disturbed',
-      '?       this help           ESC closes menus',
+    this.drawHelp();
+  }
+};
+Game.prototype.drawHelp = function () {
+  var t = this.term;
+  this.panel(6, 0, 68, 24, 'Commands  (' +
+    (SETTINGS.keys === 'original' ? 'original Umoria keys' : 'rogue-like keys') + ')');
+  var L;
+  if (SETTINGS.keys === 'original') {
+    L = [
+      'MOVE     arrows or number keys (numpad):  7 8 9',
+      '                                          4   6',
+      '                                          1 2 3',
+      '5 or .   wait one turn',
+      '>  <     descend / ascend stairs   M  map of the level',
+      'L        locate yourself           l  look around',
+      'o  c     open / close a door       s  search for traps',
+      'i        inventory                 e  equipment list',
+      'w        wear / wield              t  take something off',
+      'g or ,   pick up                   d  drop',
+      'q        quaff potion              r  read scroll',
+      'E        eat food                  F  fill lamp with oil',
+      'm        cast magic spell (Mage)   p  pray (Priest)',
+      'R        rest                      C  character sheet',
+      '=  ESC   options menu              ?  this help',
       '',
-      'F2 phosphor colour   F3 CRT effect   F4 music on/off',
-      '',
-      'Walk into a numbered door in town to enter a store.',
-      'Beware: your torch burns down. Buy spares. Eat food.',
+      'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
+      'Walk into a numbered town door to enter a store.',
+      'Your torch burns down -- buy spares. Eat or starve.',
       'The Balrog waits at 2500 feet. Good luck.'
     ];
-    for (i = 0; i < L.length; i++) t.str(15, 3 + i, L[i]);
+  } else {
+    L = [
+      'MOVE     hjkl, diagonals yubn, arrows or numpad',
+      '5 or .   wait one turn',
+      '>  <     descend / ascend stairs   M  map of the level',
+      'L        locate yourself           x  look around',
+      'o  c     open / close a door       s  search for traps',
+      'i        inventory                 e  equipment list',
+      'w        wear / wield              t  take something off',
+      'g or ,   pick up                   d  drop',
+      'q        quaff potion              r  read scroll',
+      'E        eat food                  F  fill lamp with oil',
+      'm        cast magic spell (Mage)   p  pray (Priest)',
+      'R        rest                      C  character sheet',
+      '=  ESC   options menu              ?  this help',
+      '',
+      'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
+      'Walk into a numbered town door to enter a store.',
+      'Your torch burns down -- buy spares. Eat or starve.',
+      'The Balrog waits at 2500 feet. Good luck.'
+    ];
   }
+  for (var i = 0; i < L.length; i++) t.str(8, 2 + i, L[i]);
+};
+Game.prototype.drawCharSheet = function () {
+  var t = this.term, p = this.p;
+  this.panel(14, 1, 52, 22, 'Character');
+  var y = 3, x = 17;
+  t.str(x, y++, p.name + ', ' + p.sex + ' ' + p.race.name + ' ' + p.cls.name);
+  y++;
+  var names = ['STR', 'INT', 'WIS', 'DEX', 'CON', 'CHR'];
+  var keys = ['str', 'int', 'wis', 'dex', 'con', 'chr'];
+  for (var i = 0; i < 6; i++) t.str(x, y++, names[i] + ' : ' + U.pad(p.st[keys[i]], 3));
+  y++;
+  t.str(x, y++, 'Level      : ' + p.lvl + '   (next at ' + this.expNeeded(p.lvl + 1) + ' exp)');
+  t.str(x, y++, 'Experience : ' + p.exp);
+  t.str(x, y++, 'Hit points : ' + p.hp + ' / ' + p.maxhp);
+  if (p.maxmana > 0) t.str(x, y++, 'Mana       : ' + p.mana + ' / ' + p.maxmana);
+  t.str(x, y++, 'Armour     : ' + this.playerAC());
+  t.str(x, y++, 'Gold       : ' + p.gold);
+  t.str(x, y++, 'Weapon     : ' + (p.eq.weapon ? DATA.displayName(p.eq.weapon) : 'bare hands'));
+  t.str(x, y++, 'Deepest    : ' + (p.maxDepth * 50) + ' feet');
+  t.str(x, y++, 'Lives left : ' + p.lives);
+};
+Game.prototype.drawMap = function () {
+  var t = this.term, l = this.level, p = this.p;
+  t.clear();
+  var title = this.depth === 0 ? 'Map of the town' : 'Map of the level (' + this.depth * 50 + ' feet)';
+  t.center(0, '=== ' + title + ' ===');
+  // scale the level down to fit the 67x22 view (dungeon levels are 132x44)
+  var sx = Math.max(1, Math.ceil(l.w / MAP_W)), sy = Math.max(1, Math.ceil(l.h / MAP_H));
+  var T = tiles();
+  for (var my = 0; my < Math.ceil(l.h / sy); my++) {
+    for (var mx = 0; mx < Math.ceil(l.w / sx); mx++) {
+      var best = -1, bestPr = -1;
+      for (var oy = 0; oy < sy; oy++) {
+        for (var ox = 0; ox < sx; ox++) {
+          var wx = mx * sx + ox, wy = my * sy + oy;
+          if (wx >= l.w || wy >= l.h || !l.explored[wy][wx]) continue;
+          var tv = l.map[wy][wx], pr;
+          if (tv === T.UP || tv === T.DOWN) pr = 5;
+          else if (tv >= T.STORE) pr = 5;
+          else if (tv === T.DOORC || tv === T.DOORO) pr = 3;
+          else if (tv === T.FLOOR || tv === T.CORR) pr = 2;
+          else pr = 1;
+          if (pr > bestPr) { bestPr = pr; best = tv; }
+        }
+      }
+      if (bestPr < 0) continue;
+      t.put(7 + mx, 1 + my, this.tileChar(best), bestPr < 3);
+    }
+  }
+  t.put(7 + Math.floor(p.x / sx), 1 + Math.floor(p.y / sy), '@');
+  t.center(23, 'You are at @ -- press any key to continue', true);
 };
 Game.prototype.drawStore = function () {
   var t = this.term, st = DATA.STORES[this.storeIdx], p = this.p, i;

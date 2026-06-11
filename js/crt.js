@@ -144,6 +144,16 @@ CRT.prototype._bindQuad = function (prog) {
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 };
 
+CRT.prototype.rebuild = function () {
+  var gl = this.gl;
+  gl.deleteTexture(this.texSrc);
+  gl.deleteTexture(this.fbA.tex); gl.deleteFramebuffer(this.fbA.fbo);
+  gl.deleteTexture(this.fbB.tex); gl.deleteFramebuffer(this.fbB.fbo);
+  this.texSrc = this._makeTex(this.src.width, this.src.height);
+  this.fbA = this._makeFB(this.src.width, this.src.height);
+  this.fbB = this._makeFB(this.src.width, this.src.height);
+};
+
 CRT.prototype.render = function (timeSec) {
   if (!this.gl) { // 2D fallback, no effects
     var c2 = this.ctx2d;
@@ -154,6 +164,7 @@ CRT.prototype.render = function (timeSec) {
   }
   var gl = this.gl;
   if (!this.canvas.width || !this.canvas.height) return;
+  if (this.src.width !== this.fbA.w || this.src.height !== this.fbA.h) this.rebuild();
 
   // upload fresh terminal frame
   gl.activeTexture(gl.TEXTURE0);

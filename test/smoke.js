@@ -4,7 +4,8 @@ var fs = require('fs'), path = require('path');
 var root = path.join(__dirname, '..');
 
 global.window = global; // game guards window.AudioSys, which stays undefined
-['util', 'data', 'dungeon', 'game'].forEach(function (f) {
+global.Terminal = { CYCLE: ['amber', 'green', 'white'] }; // menu cycles phosphors
+['util', 'settings', 'data', 'dungeon', 'game'].forEach(function (f) {
   eval.call(global, fs.readFileSync(path.join(root, 'js', f + '.js'), 'utf8'));
 });
 
@@ -28,14 +29,17 @@ key(g, 'Enter');
 if (g.state !== 'play') throw new Error('expected play state, got ' + g.state);
 if (!g.p.inv.some(function (i) { return i.key === 'phial'; })) throw new Error('phial missing');
 
-// random-input fuzz across all commands
+// random-input fuzz across all commands, in both key binding modes
 var keys = ['h', 'j', 'k', 'l', 'y', 'u', 'b', 'n', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-  '.', '5', '>', '<', 'g', ',', 'i', 'w', 't', 'd', 'q', 'r', 'E', 'F', 'm', 'R', 's', '?',
-  'a', 'b', 'c', 'd', 'e', 'p', 'Escape', ' ', 'Enter'];
+  '.', '5', '1', '2', '3', '4', '6', '7', '8', '9', '>', '<', 'g', ',', 'i', 'w', 't', 'd',
+  'q', 'r', 'E', 'F', 'm', 'p', 'R', 's', 'x', 'o', 'c', 'e', 'M', 'L', 'C', '?', '=',
+  'a', 'f', 'Escape', ' ', 'Enter'];
 for (var i = 0; i < 30000; i++) {
+  if (i === 15000) { SETTINGS.keys = 'roguelike'; }
   key(g, keys[Math.floor(Math.random() * keys.length)]);
   if (g.state === 'dead') { key(g, ' '); key(g, ' '); break; }
 }
+SETTINGS.keys = 'original';
 console.log('fuzz done. state=' + g.state + ' turn=' + g.turn +
   (g.p ? ' depth=' + g.depth + ' hp=' + g.p.hp + ' lives=' + g.p.lives : ''));
 
@@ -58,6 +62,7 @@ for (var d = 1; d <= 50; d++) {
   if (!found) throw new Error('no down stairs on depth ' + g.depth);
   g.p.x = found.x; g.p.y = found.y;
   g.p.hp = 9999; g.p.maxhp = 9999; g.p.food = 5000; // survive the trip
+  if (g.ui) key(g, 'Escape'); // close any overlay left open by the walk
   key(g, '>');
   for (var s = 0; s < 30; s++) key(g, ['h', 'j', 'k', 'l', '.'][Math.floor(Math.random() * 5)]);
   if (g.state !== 'play' && g.state !== 'win') throw new Error('state ' + g.state + ' at depth ' + g.depth);

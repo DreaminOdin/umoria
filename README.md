@@ -40,26 +40,58 @@ einen Dolch, einen kleinen Schild, ein paar Fackeln und etwas Proviant.
 Stufe und Erfahrung bleiben erhalten. Erst der dritte Tod ist endgültig —
 dann gibt's den klassischen Grabstein.
 
+Standardmäßig wechselt dabei die Bildschirmfarbe: zweites Leben **Purple**,
+drittes Leben **Rot** — man sieht also jederzeit, wie ernst es steht
+(im Optionsmenü abschaltbar).
+
 ## Steuerung
+
+Standard ist die **originale Umoria-Tastaturbelegung**; im Optionsmenü kann
+auf Rogue-like-Tasten (`hjkl`) umgeschaltet werden. `?` zeigt jederzeit die
+vollständige Befehlsliste der aktiven Belegung (auch auf dem Titelbildschirm).
 
 | Taste | Aktion |
 |---|---|
-| Pfeile / `hjkl` / `yubn` / Numpad | Bewegen (8 Richtungen) |
+| Pfeile / Numpad `1`–`9` | Bewegen (8 Richtungen); `hjkl`/`yubn` im Rogue-like-Modus |
 | `5` oder `.` | Warten |
 | `>` / `<` | Treppe runter / rauf |
+| `M` | **Karte der Ebene** |
+| `L` | Position anzeigen (locate) |
+| `l` | Umsehen (look; im Rogue-like-Modus: `x`) |
+| `C` | Charakterbogen |
+| `o` / `c` | Tür öffnen / schließen (mit Richtung) |
 | `g` oder `,` | Aufheben |
-| `i` | Inventar |
+| `i` / `e` | Inventar / Ausrüstungsliste |
 | `w` / `t` | Anlegen / Ablegen |
 | `q` / `r` / `E` | Trank trinken / Schriftrolle lesen / Essen |
 | `F` | Laterne mit Öl füllen |
-| `m` | Zauber wirken |
+| `m` / `p` | Zauber wirken (Mage) / Beten (Priest) |
 | `R` | Rasten |
 | `s` | Nach Fallen suchen |
 | `d` | Gegenstand fallen lassen |
-| `?` | Hilfe |
+| `?` | Hilfe mit allen Tasten |
+| **ESC** oder `=` | **Optionsmenü** |
 | **F2** | Phosphor-Farbe (Amber / Grün / Weiß) |
-| **F3** | CRT-Effekt an/aus |
+| **F3** | Anzeige: CRT (authentisch) / Sharp (modern) |
 | **F4** | Musik an/aus |
+| **F11** | Vollbild (nur das Bild, ohne Rahmen) |
+
+## Optionsmenü (ESC)
+
+Alle Einstellungen werden im Browser gespeichert (localStorage):
+
+- **Display:** *CRT (authentic 1983)* — die volle Röhren-Optik — oder
+  *Sharp (modern)*: doppelte Render-Auflösung, gestochen scharf, ohne
+  CRT-Effekte.
+- **Phosphor colour:** Amber / Grün / Weiß.
+- **Screen colour per life:** Bildschirmfarbe wechselt mit jedem Leben —
+  Leben 1 normal, Leben 2 **Purple**, Leben 3 **Rot**. Alternativ
+  *Classic* (immer gleiche Farbe).
+- **Theme:** *Dark room* (klassisch dunkel) / *Light room* — helles
+  Papier-Display für Umgebungen mit viel Licht.
+- **Music:** Soundtrack an/aus.
+- **Key bindings:** *Original Umoria* / *Rogue-like (hjkl)*.
+- **Fullscreen:** echter Vollbildmodus ohne Rahmen (auch F11).
 
 ## Musik & Sprache
 

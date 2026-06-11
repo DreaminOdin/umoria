@@ -83,6 +83,8 @@ var AudioSys = (function () {
     return musicOn;
   }
 
+  function setMusic(on) { musicOn = !!on; }
+
   // ---- voice clips (e.g. Tolkien readings) -------------------------------
   // Drop your own legally obtained clips into audio/voice/ named
   // voice1.mp3 .. voice8.mp3 and they will play occasionally during the
@@ -160,5 +162,5 @@ var AudioSys = (function () {
     }
   }
 
-  return { unlock: unlock, toggleMusic: toggleMusic, sfx: sfx, voice: voice };
+  return { unlock: unlock, toggleMusic: toggleMusic, setMusic: setMusic, sfx: sfx, voice: voice };
 })();
