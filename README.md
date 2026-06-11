@@ -21,7 +21,14 @@ Einfach **`index.html` im Browser öffnen** — kein Build, kein Server nötig.
 - **Charaktererschaffung** wie im Original: 8 Rassen, 4 Klassen (Warrior,
   Mage, Priest, Rogue), ausgewürfelte Attribute.
 - **Stadt** mit 6 Läden (betreten durch die nummerierten Türen `1`–`6`):
-  Gemischtwaren, Rüstungen, Waffen, Tempel, Alchemist, Magier.
+  Gemischtwaren, Rüstungen, Waffen, Tempel, Alchemist, Magier — mit den
+  Original-Händlern (Erick the Honest, Mauglin the Grumpy, Arndal
+  Beast-Slayer, Ludwig the Humble, Mauser the Chemist, Buzzby the Wizard).
+- **Feilschen** wie im Original: Der Händler nennt einen überhöhten Preis,
+  du machst Gegenangebote (Zahl tippen + ENTER, `a` = akzeptieren). Beim
+  Verkaufen umgekehrt. Wer den Händler mit Dreistangeboten beleidigt
+  (3 Strikes), fliegt raus — der Laden bleibt dann 500 Züge verriegelt.
+  Charisma beeinflusst die Preisbasis.
 - **Dungeon:** prozedural generierte Ebenen, Fallen, Geheimnisse, über 35
   Monsterarten (Gift, Paralyse, Lebenskraft-Entzug, Diebe, Zauberer,
   Drachenodem …).
@@ -123,6 +130,16 @@ Alle Einstellungen werden im Browser gespeichert (localStorage):
 
 *pedo mellon a minno.* — Wer die Inschrift der Tore von Durin kennt, weiß,
 was auf dem Titelbildschirm zu tippen ist …
+
+## Was (noch) fehlt gegenüber dem Original
+
+Dies ist ein **Remake in JavaScript**, kein Port des C++-Originalcodes
+([dungeons-of-moria/umoria](https://github.com/dungeons-of-moria/umoria) —
+wer 1:1 das Original im Browser will: [browser-based-umoria](https://github.com/jhirschberg70/browser-based-umoria)).
+Noch nicht nachgebaut sind u. a.: Zauberstäbe/Stäbe (wands/staves), Ringe
+und Amulette, Graben durch Adern (mining), Geheimtüren, Truhen, Fernkampf
+(Bögen/Wurfwaffen), Zauberbücher mit Lernsystem (`G`), Verfluchungen,
+Charakter-Vorgeschichte und die Highscore-Liste.
 
 ## Credits
 

@@ -112,13 +112,14 @@ var DATA = (function () {
     oil:       { kind: 'oil',  name: 'Flask of Oil',   fuel: 7500, price: 3 }
   };
 
+  // store owners as in the original Moria data
   var STORES = [
-    { name: 'General Store',    sellKinds: ['food', 'light', 'oil'],  stock: ['ration', 'biscuit', 'jerky', 'torch', 'oil', 'lantern'] },
-    { name: 'Armoury',          sellKinds: ['armor'],                 stock: ['softleath', 'hardleath', 'ringmail', 'chainmail', 'smshield', 'lgshield', 'cap', 'ironhelm'] },
-    { name: 'Weapon Smith',     sellKinds: ['weapon'],                stock: ['dagger', 'shortsw', 'mace', 'spear', 'broadsw', 'battleaxe', 'warhammer', 'twohander'] },
-    { name: 'Temple',           sellKinds: ['potion'],                stock: ['p_clw', 'p_csw', 'mace', 'warhammer'] },
-    { name: 'Alchemy Shop',     sellKinds: ['potion', 'scroll'],      stock: ['p_clw', 'p_hero', 'p_rstr', 's_ident', 's_light'] },
-    { name: 'Magic Shop',       sellKinds: ['scroll'],                stock: ['s_map', 's_tele', 's_enchw', 's_encha', 'p_speed'] }
+    { name: 'General Store', owner: 'Erick the Honest',      sellKinds: ['food', 'light', 'oil'], stock: ['ration', 'biscuit', 'jerky', 'torch', 'oil', 'lantern'] },
+    { name: 'Armoury',       owner: 'Mauglin the Grumpy',    sellKinds: ['armor'],                stock: ['softleath', 'hardleath', 'ringmail', 'chainmail', 'smshield', 'lgshield', 'cap', 'ironhelm'] },
+    { name: 'Weapon Smith',  owner: 'Arndal Beast-Slayer',   sellKinds: ['weapon'],               stock: ['dagger', 'shortsw', 'mace', 'spear', 'broadsw', 'battleaxe', 'warhammer', 'twohander'] },
+    { name: 'Temple',        owner: 'Ludwig the Humble',     sellKinds: ['potion'],               stock: ['p_clw', 'p_csw', 'mace', 'warhammer'] },
+    { name: 'Alchemy Shop',  owner: 'Mauser the Chemist',    sellKinds: ['potion', 'scroll'],     stock: ['p_clw', 'p_hero', 'p_rstr', 's_ident', 's_light'] },
+    { name: 'Magic Shop',    owner: 'Buzzby the Wizard',     sellKinds: ['scroll'],               stock: ['s_map', 's_tele', 's_enchw', 's_encha', 'p_speed'] }
   ];
 
   var SPELLS = {

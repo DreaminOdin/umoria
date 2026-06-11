@@ -18,6 +18,8 @@ function Game(term) {
   this.storeIdx = -1;
   this.storeUI = null;   // null | 'buy' | 'sell'
   this.sellList = [];
+  this.haggle = null;    // active bargaining session
+  this.storeClosed = {}; // storeIdx -> turn until which you are banned
   this.cg = null;
   this.deathCause = '';
   this.vis = {};
@@ -32,6 +34,7 @@ Game.prototype.sfx = function (name) { if (window.AudioSys) AudioSys.sfx(name); 
 Game.prototype.msg = function (s) { this.msgQ.push(s); };
 Game.prototype.wantsBlink = function () {
   return this.state === 'title' || this.state === 'dead' || this.state === 'lostlife' ||
+    (this.state === 'store' && !!this.haggle) ||
     (this.state === 'chargen' && this.cg && this.cg.step === 'name');
 };
 
@@ -176,6 +179,7 @@ Game.prototype.createPlayer = function () {
 Game.prototype.startGame = function () {
   this.createPlayer();
   this.turn = 0;
+  this.storeClosed = {};
   this.gotoLevel(0, 'new');
   this.state = 'play';
   this.msgQ = [];
@@ -1144,11 +1148,16 @@ Game.prototype.passTurn = function () {
 
 // ---------------------------------------------------------------- stores
 Game.prototype.enterStore = function (i) {
+  if (this.storeClosed && this.storeClosed[i] > this.turn) {
+    this.msg('The door is barred. ' + DATA.STORES[i].owner + ' is still fuming about you.');
+    return;
+  }
   this.storeIdx = i;
   this.storeUI = null;
+  this.haggle = null;
   this.state = 'store';
   this.msgQ = [];
-  this.msg('Welcome to the ' + DATA.STORES[i].name + '!');
+  this.msg('"Welcome to the ' + DATA.STORES[i].name + '," says ' + DATA.STORES[i].owner + '.');
 };
 Game.prototype.chrFactor = function () {
   return U.clamp(1.32 - this.p.st.chr * 0.02, 0.85, 1.3);
@@ -1161,6 +1170,7 @@ Game.prototype.sellPrice = function (it) {
 };
 Game.prototype.storeKey = function (k) {
   var st = DATA.STORES[this.storeIdx];
+  if (this.haggle) { this.haggleKey(k); return; }
   if (k === 'Escape' || k === ' ' || (k === 'q' && !this.storeUI)) {
     if (this.storeUI) { this.storeUI = null; return; }
     this.state = 'play';
@@ -1171,33 +1181,14 @@ Game.prototype.storeKey = function (k) {
   if (this.storeUI === 'buy') {
     if (i >= 0 && i < st.stock.length) {
       this.msgQ = [];
-      var key = st.stock[i], price = this.buyPrice(key);
-      if (this.p.gold < price) { this.msg('You do not have enough gold.'); }
-      else {
-        var it = DATA.makeItem(key);
-        if (!this.addItem(it)) { this.msg('You cannot carry any more.'); }
-        else {
-          this.p.gold -= price;
-          DATA.identify(key);
-          this.msg('You bought ' + DATA.displayName(it) + ' for ' + price + ' gold.');
-          this.sfx('gold');
-        }
-      }
-      this.storeUI = null;
+      this.startHaggle('buy', st.stock[i]);
     }
     return;
   }
   if (this.storeUI === 'sell') {
     if (i >= 0 && i < this.sellList.length) {
       this.msgQ = [];
-      var idx = this.sellList[i];
-      var sit = this.p.inv[idx];
-      var val = this.sellPrice(sit);
-      this.removeOne(idx);
-      this.p.gold += val;
-      this.msg('You sold ' + sit.name + ' for ' + val + ' gold.');
-      this.sfx('gold');
-      this.storeUI = null;
+      this.startHaggle('sell', this.sellList[i]);
     }
     return;
   }
@@ -1208,9 +1199,121 @@ Game.prototype.storeKey = function (k) {
     for (var j = 0; j < this.p.inv.length; j++) {
       if (st.sellKinds.indexOf(this.p.inv[j].kind) >= 0) this.sellList.push(j);
     }
-    if (!this.sellList.length) { this.msg('You have nothing this store wants.'); return; }
+    if (!this.sellList.length) { this.msg('"You have nothing I want," says ' + st.owner + '.'); return; }
     this.storeUI = 'sell';
   }
+};
+
+// ------------------------------------------------------------- haggling
+// As in the original game: the owner starts high (or low when buying from
+// you), you make counter-offers, lowball insults get you thrown out.
+Game.prototype.startHaggle = function (type, ref) {
+  var st = DATA.STORES[this.storeIdx];
+  if (type === 'buy') {
+    var fair = this.buyPrice(ref);
+    var ask = Math.max(fair + 1, Math.round(fair * (1.25 + U.rnd() * 0.35)));
+    this.haggle = {
+      type: 'buy', key: ref, ask: ask,
+      floor: Math.max(1, Math.round(fair * (0.92 + U.rnd() * 0.12))),
+      insults: 0, rounds: 0, input: '',
+      note: '"A fine choice! For you, a mere ' + ask + ' gold."'
+    };
+  } else {
+    var it = this.p.inv[ref];
+    var val = this.sellPrice(it);
+    var offer = Math.max(1, Math.round(val * (0.55 + U.rnd() * 0.15)));
+    this.haggle = {
+      type: 'sell', invIdx: ref, ask: offer,
+      cap: Math.max(1, Math.round(val * (1.0 + U.rnd() * 0.15))),
+      insults: 0, rounds: 0, input: '',
+      note: '"Hmm. I will give you ' + offer + ' gold for that," says ' + st.owner + '.'
+    };
+  }
+};
+Game.prototype.haggleKey = function (k) {
+  var h = this.haggle;
+  if (k === 'Escape' || k === ' ') {
+    this.haggle = null;
+    this.msgQ = [];
+    this.msg('"Perhaps another time, then."');
+    return;
+  }
+  if (k >= '0' && k <= '9' && h.input.length < 6) { h.input += k; return; }
+  if (k === 'Backspace') { h.input = h.input.slice(0, -1); return; }
+  if (k === 'a') { this.haggleDeal(h.ask); return; }
+  if (k === 'Enter') {
+    var v = parseInt(h.input || '0', 10);
+    h.input = '';
+    if (v > 0) this.makeOffer(v);
+  }
+};
+Game.prototype.makeOffer = function (o) {
+  var h = this.haggle, st = DATA.STORES[this.storeIdx];
+  h.rounds++;
+  if (h.type === 'buy') {
+    if (o >= h.ask) { this.haggleDeal(h.ask); return; }
+    if (o >= h.floor) { this.haggleDeal(o); return; }
+    if (o < h.floor * 0.5) { this.haggleInsult(); return; }
+    var drop = Math.max(1, Math.round((h.ask - o) * 0.45));
+    h.ask = Math.max(h.floor, h.ask - drop);
+    h.note = h.ask <= h.floor || h.rounds >= 6 ?
+      '"' + h.ask + ' gold. That is my final offer!"' :
+      '"' + o + '? Outrageous! But... say ' + h.ask + ' gold."';
+    if (h.rounds >= 6) h.ask = h.floor;
+  } else {
+    if (o <= h.ask) { this.haggleDeal(h.ask); return; }
+    if (o <= h.cap) { this.haggleDeal(o); return; }
+    if (o > h.cap * 1.8) { this.haggleInsult(); return; }
+    var rise = Math.max(1, Math.round((o - h.ask) * 0.4));
+    h.ask = Math.min(h.cap, h.ask + rise);
+    h.note = h.ask >= h.cap || h.rounds >= 6 ?
+      '"' + h.ask + ' gold. Take it or leave it!"' :
+      '"' + o + '? Do you take me for a fool? ' + h.ask + ' gold."';
+    if (h.rounds >= 6) h.ask = h.cap;
+  }
+};
+Game.prototype.haggleInsult = function () {
+  var h = this.haggle, st = DATA.STORES[this.storeIdx];
+  h.insults++;
+  if (h.insults >= 3) {
+    this.storeClosed[this.storeIdx] = this.turn + 500;
+    this.haggle = null;
+    this.storeUI = null;
+    this.state = 'play';
+    this.msgQ = [];
+    this.msg(st.owner + ' loses his temper and throws you out of the store!');
+    this.sfx('hurt');
+    return;
+  }
+  h.note = h.insults === 1 ?
+    '"Do you wish to insult me?!"' :
+    '"One more offer like that and you are OUT!"';
+};
+Game.prototype.haggleDeal = function (price) {
+  var h = this.haggle, st = DATA.STORES[this.storeIdx];
+  this.msgQ = [];
+  if (h.type === 'buy') {
+    if (this.p.gold < price) {
+      h.note = '"You do not have that much gold, ' + (this.p.name || 'friend') + '!"';
+      return;
+    }
+    var it = DATA.makeItem(h.key);
+    if (!this.addItem(it)) {
+      h.note = '"You cannot even carry it!"';
+      return;
+    }
+    this.p.gold -= price;
+    DATA.identify(h.key);
+    this.msg('You bought ' + DATA.displayName(it) + ' for ' + price + ' gold. "A pleasure!"');
+  } else {
+    var sit = this.p.inv[h.invIdx];
+    this.removeOne(h.invIdx);
+    this.p.gold += price;
+    this.msg('You sold ' + DATA.displayName(sit) + ' for ' + price + ' gold.');
+  }
+  this.sfx('gold');
+  this.haggle = null;
+  this.storeUI = null;
 };
 
 // ================================================================ DRAWING
@@ -1575,7 +1678,22 @@ Game.prototype.drawStore = function () {
   var t = this.term, st = DATA.STORES[this.storeIdx], p = this.p, i;
   t.str(0, 0, this.msgQ.join(' ').slice(0, 80));
   t.center(2, '=== ' + st.name.toUpperCase() + ' ===');
+  t.center(3, 'Proprietor: ' + st.owner, true);
   t.str(4, 4, 'Gold remaining: ' + p.gold);
+  if (this.haggle) {
+    var h = this.haggle;
+    var what = h.type === 'buy' ?
+      (function () { var tm = DATA.ITEMS[h.key]; return tm.kind === 'potion' ? 'Potion of ' + tm.name : tm.kind === 'scroll' ? 'Scroll of ' + tm.name : tm.name; })() :
+      DATA.displayName(p.inv[h.invIdx]);
+    this.panel(8, 7, 64, 11, h.type === 'buy' ? 'Haggling -- buying' : 'Haggling -- selling');
+    t.str(11, 9, (h.type === 'buy' ? 'Item    : ' : 'Selling : ') + what.slice(0, 48));
+    t.str(11, 10, (h.type === 'buy' ? 'Asking  : ' : 'Offering: ') + h.ask + ' gold');
+    t.str(11, 12, h.note.slice(0, 58));
+    t.str(11, 14, 'Your ' + (h.type === 'buy' ? 'offer ' : 'price ') + ': ' +
+      h.input + (this.blinkOn ? '_' : ' '));
+    t.str(11, 16, 'ENTER) bid   a) accept ' + h.ask + '   SPACE) never mind', true);
+    return;
+  }
   if (this.storeUI === 'sell') {
     t.str(4, 6, 'Sell which item?');
     for (i = 0; i < this.sellList.length && i < 14; i++) {

@@ -69,6 +69,37 @@ for (var d = 1; d <= 50; d++) {
 }
 console.log('descent to depth ' + g.depth + ' ok. monsters=' + g.level.monsters.length);
 
+// haggling: accept a deal, get thrown out for insults, sell something
+g.state = 'play'; g.ui = null;
+g.p.gold = 100000;
+if (g.p.inv.length > 10) g.p.inv.length = 10;
+g.enterStore(0);
+if (g.state !== 'store') throw new Error('store entry failed');
+g.storeKey('p'); g.storeKey('a');
+if (!g.haggle) throw new Error('buy haggle did not start');
+g.storeKey('a'); // accept the asking price
+if (g.haggle) throw new Error('deal should end the haggle');
+g.storeKey('p'); g.storeKey('a');
+for (var ki = 0; ki < 6 && g.state === 'store'; ki++) {
+  g.haggle.input = '1'; // insultingly low offer
+  g.storeKey('Enter');
+}
+if (g.state !== 'play') throw new Error('expected to be thrown out');
+if (!(g.storeClosed[0] > g.turn)) throw new Error('store should be closed');
+g.enterStore(0);
+if (g.state === 'store') throw new Error('closed store let us in');
+g.storeClosed[0] = 0;
+g.enterStore(0);
+g.storeKey('s');
+if (g.storeUI !== 'sell') throw new Error('nothing to sell to the general store');
+g.storeKey('a');
+if (!g.haggle) throw new Error('sell haggle did not start');
+g.storeKey('a');
+if (g.haggle) throw new Error('sell deal should end the haggle');
+g.storeKey(' ');
+if (g.state !== 'play') throw new Error('could not leave store');
+console.log('haggling ok');
+
 // lives system: die twice, then for good
 g.p.hp = 1; g.p.maxhp = 20; g.p.lives = 3;
 g.die('a test harness');
