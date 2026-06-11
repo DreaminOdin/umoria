@@ -94,11 +94,12 @@ Alle Einstellungen werden im Browser gespeichert (localStorage):
 - **Key bindings:** *Original Umoria* / *Rogue-like (hjkl)*.
 - **Fullscreen:** echter Vollbildmodus ohne Rahmen (auch F11).
 
-> **ESC im Vollbild:** Browser reservieren ESC fürs Verlassen des
-> Vollbilds — das lässt sich nicht abschalten. Deshalb gilt im Vollbild:
-> **Leertaste** schließt Menüs/Läden, **`=`** öffnet das Optionsmenü,
-> und der erste ESC-Druck verlässt nur das Vollbild (der zweite wirkt
-> dann wieder im Spiel).
+> **ESC im Vollbild:** In **Chrome und Edge** fängt das Spiel die
+> ESC-Taste per Keyboard-Lock-API ein — ESC funktioniert dort auch im
+> Vollbild ganz normal im Spiel; **ESC gedrückt halten** (oder F11)
+> verlässt das Vollbild. In Browsern ohne diese API (Firefox, Safari)
+> verlässt der erste ESC-Druck das Vollbild — dort helfen **Leertaste**
+> (schließt Menüs/Läden) und **`=`** (Optionsmenü).
 
 ## Musik & Sprache
 

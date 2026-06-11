@@ -52,11 +52,33 @@
     applySettings();
     resize();
     window.addEventListener('resize', resize);
+
+    // With the Keyboard Lock API (Chrome/Edge), ESC keeps working in-game
+    // while in fullscreen; holding ESC (or F11) leaves fullscreen instead.
+    var escLocked = false;
+    function fsHint(text) {
+      if (game.state === 'play' || game.state === 'store') {
+        game.msg(text);
+        game.dirty = true;
+      }
+    }
     function onFsChange() {
       resize();
-      if (isFullscreen() && (game.state === 'play' || game.state === 'store')) {
-        game.msg('[Fullscreen: SPACE closes menus, = options, ESC leaves fullscreen]');
-        game.dirty = true;
+      if (isFullscreen()) {
+        if (navigator.keyboard && navigator.keyboard.lock) {
+          navigator.keyboard.lock(['Escape']).then(function () {
+            escLocked = true;
+            fsHint('[Fullscreen: hold ESC or press F11 to leave]');
+          }, function () {
+            escLocked = false;
+            fsHint('[Fullscreen: SPACE closes menus, = options, ESC leaves fullscreen]');
+          });
+        } else {
+          fsHint('[Fullscreen: SPACE closes menus, = options, ESC leaves fullscreen]');
+        }
+      } else {
+        escLocked = false;
+        if (navigator.keyboard && navigator.keyboard.unlock) navigator.keyboard.unlock();
       }
     }
     document.addEventListener('fullscreenchange', onFsChange);
@@ -65,9 +87,9 @@
     window.addEventListener('keydown', function (e) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === 'F5' || e.key === 'F12') return;
-      // In fullscreen the browser reserves ESC for leaving fullscreen; don't
-      // also trigger the in-game ESC action. SPACE serves as cancel instead.
-      if (e.key === 'Escape' && isFullscreen()) return;
+      // Without keyboard lock, the browser reserves ESC in fullscreen for
+      // leaving it; don't also trigger the in-game ESC action then.
+      if (e.key === 'Escape' && isFullscreen() && !escLocked) return;
       if (e.key === 'F11') { // run fullscreen through our own toggle
         e.preventDefault();
         toggleFullscreen();

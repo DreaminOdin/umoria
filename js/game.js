@@ -600,8 +600,8 @@ Game.prototype.drawMenu = function () {
     t.str(17, y, rows[i][0] + ') ' + rows[i][1]);
     t.str(44, y, rows[i][2], false);
   }
-  t.str(17, 19, 'In fullscreen: = opens this menu, SPACE cancels,', true);
-  t.str(17, 20, 'ESC leaves fullscreen.      SPACE or ESC) back', true);
+  t.str(17, 19, 'Fullscreen: hold ESC or press F11 to leave.', true);
+  t.str(17, 20, 'SPACE or ESC) back', true);
 };
 
 Game.prototype.tryMove = function (dx, dy) {
@@ -1490,8 +1490,8 @@ Game.prototype.drawHelp = function () {
       '=  ESC   options menu              ?  this help',
       '',
       'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
-      'SPACE closes menus and stores. In fullscreen, ESC always',
-      'leaves fullscreen first -- use SPACE and = instead.',
+      'SPACE also closes menus and stores. Fullscreen: in Chrome',
+      'and Edge ESC works in-game; HOLD ESC or press F11 to leave.',
       'Walk into a numbered town door to enter a store.',
       'The Balrog waits at 2500 feet. Good luck.'
     ];
@@ -1512,8 +1512,8 @@ Game.prototype.drawHelp = function () {
       '=  ESC   options menu              ?  this help',
       '',
       'F2 phosphor  F3 display mode  F4 music  F11 fullscreen',
-      'SPACE closes menus and stores. In fullscreen, ESC always',
-      'leaves fullscreen first -- use SPACE and = instead.',
+      'SPACE also closes menus and stores. Fullscreen: in Chrome',
+      'and Edge ESC works in-game; HOLD ESC or press F11 to leave.',
       'Walk into a numbered town door to enter a store.',
       'The Balrog waits at 2500 feet. Good luck.'
     ];
