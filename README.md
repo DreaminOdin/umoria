@@ -31,6 +31,7 @@ an options menu.
 - [Controls](#controls)
 - [Personal extensions](#personal-extensions)
 - [Music & voices](#music--voices)
+- [Troubleshooting](#troubleshooting)
 - [How it works](#how-it-works)
 - [Project structure](#project-structure)
 - [Build from source](#build-from-source)
@@ -150,6 +151,29 @@ untouched.
   excerpts in as `voice2.mp3` etc. (Tolkien’s own recordings are copyrighted and
   not included.)
 
+### Troubleshooting
+
+**Stuck on the loading screen (“Summoning the Mines of Moria…”), or the on-screen
+reload button does nothing?** Your browser is almost always serving an old,
+**cached** copy. Do one of these:
+
+- **Hard-reload** the page: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac).
+  Plain `F5` is a hardware key on some laptops — `Ctrl+Shift+R` avoids it.
+- Or open the site in a **private / incognito window** (no cache). Note: a private
+  window **discards your save when you close it**.
+- Or **clear this site’s data**: click the lock / “tune” icon left of the address
+  bar → *Cookies and site data* → delete, then reload.
+
+All scripts are versioned (`?v=…`), so once you’ve loaded a fresh copy, future
+updates refresh automatically.
+
+**Saving (`Ctrl-X`) and continuing.** After `Ctrl-X`, press through
+*“Saving… -more-”* and the high-score screen so the game fully exits and writes
+the save to the browser; **then** reload to continue. Reloading *before* that
+point loses the game. Saves live in the browser (IndexedDB); if your browser
+blocks storage, the game still starts (after a short delay) but can’t persist
+saves.
+
 ### How it works
 
 ```
@@ -260,6 +284,7 @@ Optionsmenü.
 - [Steuerung](#steuerung)
 - [Persönliche Erweiterungen](#persönliche-erweiterungen)
 - [Musik & Stimmen](#musik--stimmen)
+- [Fehlerbehebung](#fehlerbehebung)
 - [Wie es funktioniert](#wie-es-funktioniert)
 - [Projektstruktur](#projektstruktur)
 - [Selbst bauen](#selbst-bauen)
@@ -380,6 +405,29 @@ Chiptune, Stimmen, Menü) liegen in der Hülle und lassen das Spiel unangetastet
   legal besessene Tolkien-Hörbuch-Ausschnitte einfach als `voice2.mp3` usw.
   dazulegen (Tolkiens eigene Aufnahmen sind urheberrechtlich geschützt und nicht
   enthalten).
+
+### Fehlerbehebung
+
+**Hängt im Ladescreen („Summoning the Mines of Moria…") oder der Reload-Knopf
+reagiert nicht?** Fast immer liefert dein Browser eine alte Version aus dem
+**Cache**. Eine dieser Optionen:
+
+- **Hart neu laden:** `Strg+Shift+R` (Windows/Linux) bzw. `Cmd+Shift+R` (Mac).
+  `F5` ist auf manchen Laptops eine Hardware-Taste — `Strg+Shift+R` umgeht das.
+- Oder die Seite in einem **privaten / Inkognito-Fenster** öffnen (kein Cache).
+  Achtung: Ein privates Fenster **verwirft den Spielstand beim Schließen**.
+- Oder **die Website-Daten löschen:** Schloss-/Regler-Symbol links in der
+  Adressleiste → *Cookies und Websitedaten* → löschen, dann neu laden.
+
+Alle Skripte sind versioniert (`?v=…`); nach einmaligem Frischladen aktualisieren
+sich künftige Updates automatisch.
+
+**Speichern (`Ctrl-X`) und Fortsetzen.** Nach `Ctrl-X` durch *„Saving… -more-"*
+und den High-Score-Screen drücken, damit das Spiel vollständig beendet und den
+Spielstand in den Browser schreibt; **dann** neu laden zum Weiterspielen. Lädt
+man *vorher* neu, ist der Spielstand weg. Spielstände liegen im Browser
+(IndexedDB); blockiert dein Browser den Speicher, startet das Spiel trotzdem
+(nach kurzer Verzögerung), kann aber nicht speichern.
 
 ### Wie es funktioniert
 
