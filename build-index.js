@@ -17,6 +17,11 @@ if (!fs.existsSync(ENGINE_JS)) {
   process.exit(1);
 }
 
+// Cache-bust the engine and shell scripts so a new deploy is never served
+// stale from the browser cache (a query on the sub-resource URLs does NOT
+// reach window.location.search, so it can't be mistaken for a save-game arg).
+var v = '?v=' + Date.now();
+
 var html = '<!DOCTYPE html>\n' +
 '<html lang="en">\n' +
 '<head>\n' +
@@ -69,12 +74,12 @@ var html = '<!DOCTYPE html>\n' +
 '  <div id="gear" title="Options (F1)">⚙</div>\n' +
 '  <div id="hint">F1 Options · F2 Phosphor · F3 Display · F4 Music · F11 Fullscreen' +
 ' — everything else is the real Umoria (press ? in game)</div>\n' +
-'  <script src="engine/umoria.min.js"></script>\n' +
-'  <script src="js/settings.js"></script>\n' +
-'  <script src="js/terminal.js"></script>\n' +
-'  <script src="js/crt.js"></script>\n' +
-'  <script src="js/audio.js"></script>\n' +
-'  <script src="js/bridge.js"></script>\n' +
+'  <script src="engine/umoria.min.js' + v + '"></script>\n' +
+'  <script src="js/settings.js' + v + '"></script>\n' +
+'  <script src="js/terminal.js' + v + '"></script>\n' +
+'  <script src="js/crt.js' + v + '"></script>\n' +
+'  <script src="js/audio.js' + v + '"></script>\n' +
+'  <script src="js/bridge.js' + v + '"></script>\n' +
 '</body>\n' +
 '</html>\n';
 
