@@ -152,10 +152,13 @@
     term.clear();
     var msg = exitMsg || 'Thank you for playing Umoria.';
     var lines = wrapText(msg, 60).slice(0, 12);
-    var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 2);
+    var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 3);
     for (var i = 0; i < lines.length; i++) term.center(startY + i, lines[i]);
+    var y = startY + lines.length + 2;
+    term.center(y, 'Click the reload arrow (top-right corner) to continue');
+    term.center(y + 1, 'your saved game -- or press Ctrl+Shift+R.');
     if (Math.floor(performance.now() / 600) % 2 === 0) {
-      term.center(startY + lines.length + 2, '*** Reload the page (Ctrl+F5) to continue ***');
+      term.center(y + 3, '*** your game has been saved ***');
     }
   }
 
@@ -254,6 +257,12 @@
       if (!audioReady && window.AudioSys) { AudioSys.unlock(); audioReady = true; }
       menuOpen = !menuOpen;
     });
+    // The engine pops a "Leave site?" dialog on every reload; suppress it (the
+    // game is saved with Ctrl-X) so reloading to continue is smooth.
+    window.addEventListener('beforeunload', function (e) { e.stopImmediatePropagation(); }, true);
+    // A clickable reload control, for laptops where F5 is a hardware key.
+    var rb = document.getElementById('reload');
+    if (rb) rb.addEventListener('click', function () { location.reload(); });
     requestAnimationFrame(loop);
   }
 

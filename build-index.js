@@ -48,6 +48,10 @@ var html = '<!DOCTYPE html>\n' +
 '    #gear { position: fixed; top: 10px; right: 16px; color: #8a8a93; font: 20px monospace;\n' +
 '            cursor: pointer; user-select: none; z-index: 5; }\n' +
 '    #gear:hover { color: #d0d0d8; }\n' +
+'    #reload { position: fixed; top: 10px; right: 50px; color: #8a8a93; font: 20px monospace;\n' +
+'              cursor: pointer; user-select: none; z-index: 5; }\n' +
+'    #reload:hover { color: #d0d0d8; }\n' +
+'    body.fs #reload { display: none; }\n' +
 '    body.light { background: #a8a193; }\n' +
 '    body.light #bezel { background: linear-gradient(145deg, #d9d3c5, #b1aa9c);\n' +
 '                        box-shadow: 0 10px 50px rgba(0,0,0,.35), inset 0 0 16px rgba(0,0,0,.25); }\n' +
@@ -61,6 +65,7 @@ var html = '<!DOCTYPE html>\n' +
 '</head>\n' +
 '<body>\n' +
 '  <div id="bezel"><canvas id="crt" width="800" height="480"></canvas></div>\n' +
+'  <div id="reload" title="Reload / continue your saved game">⟳</div>\n' +
 '  <div id="gear" title="Options (F1)">⚙</div>\n' +
 '  <div id="hint">F1 Options · F2 Phosphor · F3 Display · F4 Music · F11 Fullscreen' +
 ' — everything else is the real Umoria (press ? in game)</div>\n' +

@@ -29,6 +29,10 @@
     #gear { position: fixed; top: 10px; right: 16px; color: #8a8a93; font: 20px monospace;
             cursor: pointer; user-select: none; z-index: 5; }
     #gear:hover { color: #d0d0d8; }
+    #reload { position: fixed; top: 10px; right: 50px; color: #8a8a93; font: 20px monospace;
+              cursor: pointer; user-select: none; z-index: 5; }
+    #reload:hover { color: #d0d0d8; }
+    body.fs #reload { display: none; }
     body.light { background: #a8a193; }
     body.light #bezel { background: linear-gradient(145deg, #d9d3c5, #b1aa9c);
                         box-shadow: 0 10px 50px rgba(0,0,0,.35), inset 0 0 16px rgba(0,0,0,.25); }
@@ -42,6 +46,7 @@
 </head>
 <body>
   <div id="bezel"><canvas id="crt" width="800" height="480"></canvas></div>
+  <div id="reload" title="Reload / continue your saved game">⟳</div>
   <div id="gear" title="Options (F1)">⚙</div>
   <div id="hint">F1 Options · F2 Phosphor · F3 Display · F4 Music · F11 Fullscreen — everything else is the real Umoria (press ? in game)</div>
   <script src="engine/umoria.min.js"></script>
