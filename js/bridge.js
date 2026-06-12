@@ -9,6 +9,7 @@
   var menuOpen = false, audioReady = false;
   var lastFeet = -1; // for triggering narrator voice clips on descent
   var lifeNum = -1;  // current "LIFE n" the engine prints, for per-life tint
+  var exited = false, exitMsg = ''; // engine ended (saved / died / quit)
 
   // -------------------------------------------------------------- fullscreen
   function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
@@ -48,7 +49,20 @@
   // ------------------------------------------------------- read game screen
   function syncScreen() {
     var sc = document.getElementById('screen');
-    if (!sc) return;
+    if (!sc) {
+      // The engine removes #screen and switches to terminal mode when the
+      // game ends (after saving, dying or quitting). Surface its final
+      // message instead of leaving a frozen screen behind.
+      if (ready) {
+        exited = true;
+        var tEl = document.getElementById('terminal');
+        if (tEl) {
+          var txt = (tEl.textContent || '').replace(/\s+/g, ' ').trim();
+          if (txt) exitMsg = txt;
+        }
+      }
+      return;
+    }
     var kids = sc.children, got = false;
     for (var i = 0; i < kids.length; i++) {
       var el = kids[i], id = el.id;
@@ -125,6 +139,26 @@
     }
   }
 
+  function wrapText(s, width) {
+    var words = s.split(' '), lines = [], cur = '';
+    for (var i = 0; i < words.length; i++) {
+      if ((cur + ' ' + words[i]).trim().length > width) { lines.push(cur.trim()); cur = words[i]; }
+      else { cur = (cur + ' ' + words[i]).trim(); }
+    }
+    if (cur) lines.push(cur.trim());
+    return lines;
+  }
+  function drawExit() {
+    term.clear();
+    var msg = exitMsg || 'Thank you for playing Umoria.';
+    var lines = wrapText(msg, 60).slice(0, 12);
+    var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 2);
+    for (var i = 0; i < lines.length; i++) term.center(startY + i, lines[i]);
+    if (Math.floor(performance.now() / 600) % 2 === 0) {
+      term.center(startY + lines.length + 2, '*** Reload the page (Ctrl+F5) to continue ***');
+    }
+  }
+
   // ------------------------------------------------------------ menu overlay
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function panel(x0, y0, w, h, title) {
@@ -190,10 +224,15 @@
   // ------------------------------------------------------------------- loop
   function loop(t) {
     syncScreen();
-    term.phosphor = effectivePhosphor();
     term.theme = SETTINGS.theme;
-    drawGame();
-    if (menuOpen) drawMenu();
+    if (exited) {
+      term.phosphor = SETTINGS.phosphor;
+      drawExit();
+    } else {
+      term.phosphor = effectivePhosphor();
+      drawGame();
+      if (menuOpen) drawMenu();
+    }
     term.render();
     if (crt) crt.render(t / 1000);
     requestAnimationFrame(loop);

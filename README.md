@@ -134,8 +134,10 @@ Purely cosmetic wishes (CRT look, phosphor colours, dark/light, sharp/CRT,
 fullscreen, chiptune, voices, menu) live in the shell and leave the game
 untouched.
 
-> Note: the lives system is not (yet) stored in the save file — after saving and
-> reloading you get 3 fresh lives.
+> **Saving & continuing:** press **`Ctrl-X`** in game to save and exit; your
+> character — including the remaining lives — is stored in the browser
+> (IndexedDB). An on-screen message then reminds you to **reload the page
+> (Ctrl+F5)** to continue where you left off.
 
 ### Music & voices
 
@@ -362,8 +364,10 @@ Drei Wünsche, die *Spiellogik* sind, wurden direkt in den C++-Quellcode gepatch
 Rein optische Wünsche (CRT-Look, Phosphor-Farben, Dark/Light, Sharp/CRT, Vollbild,
 Chiptune, Stimmen, Menü) liegen in der Hülle und lassen das Spiel unangetastet.
 
-> Hinweis: Das Leben-System wird (noch) nicht im Spielstand gespeichert — nach
-> Speichern & Neuladen stehen wieder 3 Leben bereit.
+> **Speichern & Fortsetzen:** Im Spiel **`Strg-X`** drücken zum Speichern und
+> Beenden; dein Charakter — inklusive der verbleibenden Leben — liegt im Browser
+> (IndexedDB). Eine Bildschirmmeldung erinnert dann ans **Neuladen der Seite
+> (Strg+F5)**, um weiterzuspielen.
 
 ### Musik & Stimmen
 
