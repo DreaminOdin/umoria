@@ -155,10 +155,9 @@
     var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 3);
     for (var i = 0; i < lines.length; i++) term.center(startY + i, lines[i]);
     var y = startY + lines.length + 2;
-    term.center(y, 'Click the reload arrow (top-right corner) to continue');
-    term.center(y + 1, 'your saved game -- or press Ctrl+Shift+R.');
+    term.center(y, 'Your game has been saved.');
     if (Math.floor(performance.now() / 600) % 2 === 0) {
-      term.center(y + 3, '*** your game has been saved ***');
+      term.center(y + 2, '*** press any key (or click the reload arrow) to continue ***');
     }
   }
 
@@ -209,6 +208,8 @@
   function onKey(e) {
     if (!audioReady && window.AudioSys) { AudioSys.unlock(); audioReady = true; }
     if (window.AudioSys) AudioSys.setMusic(SETTINGS.music);
+    // On the end-of-game screen, any key reloads to continue (no F5 needed).
+    if (exited) { stop(e); location.reload(); return; }
     switch (e.key) {
       case 'F1': stop(e); menuOpen = !menuOpen; return;
       case 'F2': stop(e); var c = Terminal.CYCLE;
