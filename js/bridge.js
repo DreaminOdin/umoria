@@ -150,14 +150,20 @@
   }
   function drawExit() {
     term.clear();
-    var msg = exitMsg || 'Thank you for playing Umoria.';
-    var lines = wrapText(msg, 60).slice(0, 12);
-    var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 3);
+    // Until the engine has finished writing the save to the browser (it then
+    // prints its farewell into #terminal, which fills exitMsg), keep the user
+    // here so a keypress can't reload mid-save and lose the game.
+    if (!exitMsg) {
+      term.center(10, 'S A V I N G');
+      term.center(12, 'Writing your game to the browser, one moment...', true);
+      return;
+    }
+    var lines = wrapText(exitMsg, 60).slice(0, 12);
+    var startY = Math.max(2, Math.floor((ROWS - lines.length) / 2) - 2);
     for (var i = 0; i < lines.length; i++) term.center(startY + i, lines[i]);
     var y = startY + lines.length + 2;
-    term.center(y, 'Your game has been saved.');
     if (Math.floor(performance.now() / 600) % 2 === 0) {
-      term.center(y + 2, '*** press any key (or click the reload arrow) to continue ***');
+      term.center(y, '*** press any key (or click the reload arrow) to continue ***');
     }
   }
 
@@ -208,8 +214,9 @@
   function onKey(e) {
     if (!audioReady && window.AudioSys) { AudioSys.unlock(); audioReady = true; }
     if (window.AudioSys) AudioSys.setMusic(SETTINGS.music);
-    // On the end-of-game screen, any key reloads to continue (no F5 needed).
-    if (exited) { stop(e); location.reload(); return; }
+    // On the end-of-game screen, any key reloads to continue (no F5 needed) --
+    // but only once the save has been written (exitMsg set), never mid-save.
+    if (exited) { stop(e); if (exitMsg) location.reload(); return; }
     switch (e.key) {
       case 'F1': stop(e); menuOpen = !menuOpen; return;
       case 'F2': stop(e); var c = Terminal.CYCLE;
@@ -263,7 +270,10 @@
     window.addEventListener('beforeunload', function (e) { e.stopImmediatePropagation(); }, true);
     // A clickable reload control, for laptops where F5 is a hardware key.
     var rb = document.getElementById('reload');
-    if (rb) rb.addEventListener('click', function () { location.reload(); });
+    if (rb) rb.addEventListener('click', function () {
+      if (exited && !exitMsg) return; // don't reload while the save is being written
+      location.reload();
+    });
     requestAnimationFrame(loop);
   }
 
