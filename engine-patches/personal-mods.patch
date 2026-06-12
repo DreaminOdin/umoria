@@ -1,0 +1,171 @@
+﻿# UMORIA personal mods -- diff against browser-based-umoria commit 89c4b54667c99d750b1270f69bb365b87c9453ae
+diff --git a/src/game_run.cpp b/src/game_run.cpp
+index 9f5111f..1c490fd 100644
+--- a/src/game_run.cpp
++++ b/src/game_run.cpp
+@@ -24,6 +24,7 @@ static void dungeonGoUpLevel();
+ static void dungeonGoDownLevel();
+ static void dungeonJamDoor();
+ static void inventoryRefillLamp();
++static void playerResurrectInTown(); // UMORIA personal mod
+ 
+ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
+     // Start the game with Roguelike keys (disabled by default)
+@@ -129,6 +130,12 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
+         generateCave();
+     }
+ 
++    // UMORIA personal mod: a living character starts with extra lives.
++    // (Not persisted in the save file, so it resets on reload.)
++    if (py.misc.current_hp >= 0) {
++        py.misc.lives = 2;
++    }
++
+     // Loop till dead, or exit
+     while (!game.character_is_dead) {
+         // Dungeon logic
+@@ -146,6 +153,15 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
+             game.character_is_dead = true;
+         }
+ 
++        // UMORIA personal mod: multiple lives. A genuine death (not a quit,
++        // save, eof, or a winning King/Queen) sends the player back to town
++        // stripped of everything, instead of ending the game.
++        if (game.character_is_dead && py.misc.lives > 0 && !game.total_winner &&
++            game.character_died_from[0] != '(' &&
++            game.character_died_from[0] != 'Q') {
++            playerResurrectInTown();
++        }
++
+         // New level if not dead
+         if (!game.character_is_dead) {
+             generateCave();
+@@ -156,6 +172,65 @@ void startMoria(uint32_t seed, bool start_new_game, bool roguelike_keys) {
+     endGame();
+ }
+ 
++// UMORIA personal mod: resurrect the player in town, stripped to a bare kit.
++static void playerResurrectInTown() {
++    py.misc.lives--;
++    game.character_is_dead = false;
++    eof_flag = 0;
++
++    // strip the entire pack and all worn equipment
++    for (auto &entry : py.inventory) {
++        inventoryItemCopyTo(config::dungeon::objects::OBJ_NOTHING, entry);
++    }
++    py.pack.unique_items = 0;
++    py.pack.heaviness = 0;
++    py.equipment_count = 0;
++
++    // hand back only a dagger, a small shield, a few torches and some food
++    const uint16_t kit[4] = {30, 129, 365, 344}; // Stiletto, Small Metal Shield, Wooden Torch, Ration
++    for (int i = 0; i < 4; i++) {
++        Inventory_t item{};
++        inventoryItemCopyTo(kit[i], item);
++        itemIdentifyAsStoreBought(item);
++        if (kit[i] == 365) {
++            item.items_count = 3;
++        }
++        if (kit[i] == 344) {
++            item.items_count = 2;
++        }
++        (void) inventoryCarryItem(item);
++    }
++
++    // lose all gold, restore the body, clear afflictions
++    py.misc.au = 0;
++    py.misc.current_hp = py.misc.max_hp;
++    py.misc.current_hp_fraction = 0;
++    py.misc.current_mana = py.misc.mana;
++    py.misc.current_mana_fraction = 0;
++    py.flags.food = 5000;
++    py.flags.status = 0;
++    py.flags.rest = 0;
++    py.flags.poisoned = 0;
++    py.flags.blind = 0;
++    py.flags.paralysis = 0;
++    py.flags.afraid = 0;
++    py.flags.confused = 0;
++    py.flags.image = 0;
++    py.flags.slow = 0;
++    py.flags.fast = 0;
++
++    playerRecalculateBonuses();
++
++    dg.current_level = 0; // back to the town
++
++    printMessage("Death takes you... but the Fates are not yet done with you.");
++    printMessage("Temple acolytes drag your body back to the town square.");
++
++    char msg[80];
++    (void) snprintf(msg, sizeof(msg), "Your gold and goods are gone. Lives remaining: %d", py.misc.lives + 1);
++    printMessage(msg);
++}
++
+ // Init players with some belongings -RAK-
+ static void initializeCharacterInventory() {
+     Inventory_t item{};
+@@ -179,6 +254,38 @@ static void initializeCharacterInventory() {
+         (void) inventoryCarryItem(item);
+     }
+ 
++    // UMORIA easter egg: "pedo mellon a minno" -- speak, friend, and enter.
++    // A character named "mellon" (any case) starts with Sting and a phial of light.
++    {
++        const char *want = "mellon";
++        bool match = true;
++        for (int n = 0; n < 7; n++) {
++            char c = py.misc.name[n];
++            if (c >= 'A' && c <= 'Z') {
++                c = (char) (c + 32);
++            }
++            if (c != want[n]) {
++                match = false;
++                break;
++            }
++        }
++        if (match) {
++            Inventory_t sting{};
++            inventoryItemCopyTo(28, sting); // Dagger (Main Gauche), our "Sting"
++            itemIdentifyAsStoreBought(sting);
++            sting.to_hit = 5;
++            sting.to_damage = 5;
++            sting.identification |= config::identification::ID_SHOW_HIT_DAM;
++            (void) inventoryCarryItem(sting);
++
++            Inventory_t phial{};
++            inventoryItemCopyTo(364, phial); // Brass Lantern, our "Phial of Galadriel"
++            itemIdentifyAsStoreBought(phial);
++            phial.misc_use = 15000;
++            (void) inventoryCarryItem(phial);
++        }
++    }
++
+     // weird place for it, but why not?
+     for (uint8_t &id : py.flags.spells_learned_order) {
+         id = 99;
+diff --git a/src/player.h b/src/player.h
+index 61d7327..368cc9b 100644
+--- a/src/player.h
++++ b/src/player.h
+@@ -81,6 +81,7 @@ typedef struct Player_t {
+         uint8_t race_id;                // # of race
+         uint8_t hit_die;                // Char hit die
+         uint8_t experience_factor;      // Experience factor
++        uint8_t lives;                  // UMORIA personal mod: extra lives remaining
+         int16_t current_mana;           // Current mana points
+         uint16_t current_mana_fraction; // Current mana fraction * 2^16
+         int16_t current_hp;             // Current hit points
+diff --git a/src/ui.cpp b/src/ui.cpp
+index 24f061b..360ffd3 100644
+--- a/src/ui.cpp
++++ b/src/ui.cpp
+@@ -420,6 +420,7 @@ void printCharacterStatsBlock() {
+     printHeaderNumber("MANA", py.misc.current_mana, Coord_t{15, STAT_COLUMN});
+     printHeaderNumber("MHP ", py.misc.max_hp, Coord_t{16, STAT_COLUMN});
+     printHeaderNumber("CHP ", py.misc.current_hp, Coord_t{17, STAT_COLUMN});
++    printHeaderNumber("LIFE", (int) py.misc.lives + 1, Coord_t{18, STAT_COLUMN}); // UMORIA personal mod
+     printHeaderNumber("AC  ", py.misc.display_ac, Coord_t{19, STAT_COLUMN});
+     printHeaderLongNumber("GOLD", py.misc.au, Coord_t{20, STAT_COLUMN});
+     printCharacterWinner();

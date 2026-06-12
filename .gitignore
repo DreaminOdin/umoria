@@ -8,3 +8,6 @@ AGENTS.md
 
 # full clone of browser-based-umoria; only engine/umoria.html is vendored
 _engine/
+
+# build toolchain
+_tools/

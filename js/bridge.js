@@ -8,6 +8,7 @@
   var term, crt, grid = [], cursor = null, ready = false;
   var menuOpen = false, audioReady = false;
   var lastFeet = -1; // for triggering narrator voice clips on descent
+  var lifeNum = -1;  // current "LIFE n" the engine prints, for per-life tint
 
   // -------------------------------------------------------------- fullscreen
   function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
@@ -63,7 +64,21 @@
         };
       }
     }
-    if (got) { ready = true; watchDepth(); }
+    if (got) { ready = true; watchDepth(); readLives(); }
+  }
+
+  // The patched engine prints "LIFE n" in the status column (n = lives left:
+  // 3, 2 or 1). We tint the whole screen as the danger rises.
+  function readLives() {
+    for (var r = 0; r < ROWS; r++) {
+      var mm = (grid[r] || '').match(/LIFE\s+(\d+)/);
+      if (mm) { lifeNum = parseInt(mm[1], 10); return; }
+    }
+  }
+  function effectivePhosphor() {
+    if (SETTINGS.lifeColors && lifeNum === 2) return 'purple';
+    if (SETTINGS.lifeColors && lifeNum >= 0 && lifeNum <= 1) return 'red';
+    return SETTINGS.phosphor;
   }
 
   // Trigger a narrator voice clip (e.g. the bundled public-domain Beowulf
@@ -122,29 +137,30 @@
     if (title) term.str(x0 + 2, y0, ' ' + title + ' ');
   }
   function drawMenu() {
-    var x0 = 23, w = 44;
-    panel(x0, 4, w, 16, 'OPTIONS');
+    var x0 = 21, w = 48;
+    panel(x0, 3, w, 18, 'OPTIONS');
     var rows = [
       ['a', 'Display     : ' + (SETTINGS.display === 'crt' ? 'CRT (authentic 1983)' : 'Sharp (modern, crisp)')],
       ['b', 'Phosphor    : ' + cap(SETTINGS.phosphor)],
-      ['c', 'Theme       : ' + (SETTINGS.theme === 'dark' ? 'Dark room' : 'Light room')],
-      ['d', 'Music       : ' + (SETTINGS.music ? 'On' : 'Off')],
-      ['e', 'Fullscreen  : toggle (or F11)']
+      ['c', 'Life colours: ' + (SETTINGS.lifeColors ? 'On (2nd life purple, 3rd red)' : 'Off')],
+      ['d', 'Theme       : ' + (SETTINGS.theme === 'dark' ? 'Dark room' : 'Light room')],
+      ['e', 'Music       : ' + (SETTINGS.music ? 'On' : 'Off')],
+      ['f', 'Fullscreen  : toggle (or F11)']
     ];
     for (var i = 0; i < rows.length; i++) {
-      term.str(x0 + 3, 7 + i * 2, rows[i][0] + ') ' + rows[i][1]);
+      term.str(x0 + 3, 6 + i * 2, rows[i][0] + ') ' + rows[i][1]);
     }
-    term.str(x0 + 3, 17, 'F2/F3/F4 are shortcuts for the above.', true);
-    term.str(x0 + 3, 18, 'F1, SPACE or ESC) back to the game', true);
+    term.str(x0 + 3, 19, 'F1/SPACE/ESC back · F2 F3 F4 are shortcuts', true);
   }
   function menuKey(k) {
     if (k === 'Escape' || k === 'F1' || k === ' ') { menuOpen = false; return; }
     switch (k) {
       case 'a': SETTINGS.display = SETTINGS.display === 'crt' ? 'sharp' : 'crt'; break;
       case 'b': var c = Terminal.CYCLE; SETTINGS.phosphor = c[(c.indexOf(SETTINGS.phosphor) + 1) % c.length]; break;
-      case 'c': SETTINGS.theme = SETTINGS.theme === 'dark' ? 'light' : 'dark'; break;
-      case 'd': SETTINGS.music = !SETTINGS.music; break;
-      case 'e': toggleFs(); break;
+      case 'c': SETTINGS.lifeColors = !SETTINGS.lifeColors; break;
+      case 'd': SETTINGS.theme = SETTINGS.theme === 'dark' ? 'light' : 'dark'; break;
+      case 'e': SETTINGS.music = !SETTINGS.music; break;
+      case 'f': toggleFs(); break;
       default: return;
     }
     SETTINGS.changed();
@@ -174,7 +190,7 @@
   // ------------------------------------------------------------------- loop
   function loop(t) {
     syncScreen();
-    term.phosphor = SETTINGS.phosphor;
+    term.phosphor = effectivePhosphor();
     term.theme = SETTINGS.theme;
     drawGame();
     if (menuOpen) drawMenu();

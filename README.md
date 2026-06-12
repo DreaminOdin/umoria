@@ -22,16 +22,22 @@ Online: **https://dreaminodin.github.io/umoria/**
 
 ## Wie es funktioniert
 
-- **Engine:** [engine/umoria.html](engine/umoria.html) ist das vorkompilierte
-  echte Umoria. Es zeichnet seinen 80×24-Textbildschirm in versteckte
-  DOM-Zeilen (`<div id="screen">`).
+- **Engine:** [engine/umoria.min.js](engine/umoria.min.js) ist das echte
+  Umoria **5.7.15**, von mir selbst aus dem Originalquellcode nach
+  WebAssembly/asm.js kompiliert — **mit meinen Patches** (siehe unten). Es
+  zeichnet seinen 80×24-Textbildschirm in versteckte DOM-Zeilen
+  (`<div id="screen">`).
 - **Hülle:** [js/bridge.js](js/bridge.js) liest dieses Zeichenraster Bild für
   Bild aus und zeichnet es über [js/terminal.js](js/terminal.js) +
   [js/crt.js](js/crt.js) (WebGL-CRT-Shader: Scanlines, Wölbung,
   Nachleuchten, Glow, Flackern, Vignette) neu. So bekommt das echte Spiel den
   Phosphor-Look. Tastatureingaben gehen direkt an die Engine.
-- **Build:** `node build-index.js` erzeugt `index.html` neu aus
-  `engine/umoria.html` + der Hülle (nützlich, wenn die Engine ausgetauscht wird).
+- **Build:** `node build-index.js` erzeugt `index.html` aus
+  `engine/umoria.min.js` + der Hülle. Die Engine selbst wird mit
+  [_tools/build-umoria.ps1](_tools/build-umoria.ps1) (Emscripten + CMake +
+  Ninja) gebaut; meine Quelländerungen liegen als Diff in
+  [engine-patches/personal-mods.patch](engine-patches/personal-mods.patch)
+  (gegen `dungeons-of-moria/umoria`-Port-Commit `89c4b54`).
 
 ## Steuerung
 
@@ -71,19 +77,24 @@ zusätzlich: **Dark/Light-Modus** für dunkle bzw. helle Räume.
   (legal besessene) Tolkien-Hörbuch-Ausschnitte einfach als `voice2.mp3` usw.
   dazulegen.
 
-## Status & geplante persönliche Wünsche
+## Persönliche Wünsche (alle umgesetzt)
 
-✅ **Phase 1 (fertig):** das echte, vollständige Umoria + CRT-Look + Phosphor-
-Farben + Dark/Light + Sharp/CRT + Vollbild + Chiptune + Beowulf-Stimmen +
-Optionsmenü.
+✅ Echtes, vollständiges Umoria 5.7.15 + CRT-Look + Phosphor-Farben +
+Dark/Light + Sharp/CRT + Vollbild + Chiptune + Beowulf-Stimmen + Optionsmenü.
 
-🔜 **Phase 2 (geplant):** Damit auch die *gameplay-seitigen* Wünsche — **mehrere
-Leben** (Tod → zurück in die Stadt, alles weg außer Dolch/Schild/Fackeln),
-**Bildschirmfarbe pro Leben** (Leben 2 lila, Leben 3 rot) und das
-**„mellon"-Easter-Egg** — exakt im Originalspiel funktionieren, muss der
-C++-Quellcode der **neuesten** `dungeons-of-moria/umoria`-Version mit diesen
-Patches neu nach WebAssembly kompiliert werden (Emscripten-Toolchain). Das ist
-der nächste Schritt.
+✅ **Mehrere Leben** (3 Leben): Ein echter Tod schickt dich zurück in die
+Stadt — Gold und alle Gegenstände sind weg, du behältst nur einen Dolch, einen
+kleinen Schild, ein paar Fackeln und etwas Proviant. Stufe und Erfahrung
+bleiben. Erst der dritte Tod ist endgültig (Original-Grabstein). *Direkt im
+C++-Quellcode der Engine eingebaut* (`game_run.cpp`), nicht in der Hülle.
+
+✅ **Bildschirmfarbe pro Leben:** Die Statusspalte zeigt „LIFE n"; die Hülle
+färbt den Schirm beim 2. Leben **lila**, beim 3. Leben **rot** (im Menü
+abschaltbar).
+
+✅ **„mellon"-Easter-Egg:** Ein Charakter namens *mellon* (Inschrift der Tore
+von Durin) startet mit **Sting** (verzaubertem Dolch) und einer **Phiole**
+(Lampe). *Im Quellcode eingebaut.*
 
 ## Lizenz & Credits
 
