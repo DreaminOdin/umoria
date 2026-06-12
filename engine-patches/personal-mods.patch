@@ -1,4 +1,3 @@
-﻿# UMORIA personal mods -- diff against browser-based-umoria commit 89c4b54667c99d750b1270f69bb365b87c9453ae
 diff --git a/src/game_run.cpp b/src/game_run.cpp
 index 9f5111f..1c490fd 100644
 --- a/src/game_run.cpp
