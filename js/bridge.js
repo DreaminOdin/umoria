@@ -11,37 +11,16 @@
   var lifeNum = -1;  // current "LIFE n" the engine prints, for per-life tint
   var exited = false, exitMsg = ''; // engine ended (saved / died / quit)
 
-  // -------------------------------------------------------------- fullscreen
-  function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  // In fullscreen, capture Esc (Chromium Keyboard Lock API) so a short tap
-  // reaches Umoria instead of leaving fullscreen. Esc alone then goes to the
-  // game; Shift+Esc / F11 / holding Esc leave fullscreen.
-  function lockEsc() {
-    if (navigator.keyboard && navigator.keyboard.lock) {
-      try { navigator.keyboard.lock(['Escape']).catch(function () {}); } catch (e) {}
-    }
-  }
-  function unlockEsc() {
-    if (navigator.keyboard && navigator.keyboard.unlock) {
-      try { navigator.keyboard.unlock(); } catch (e) {}
-    }
-  }
-  function toggleFs() {
-    if (isFs()) {
-      unlockEsc();
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-      // Lock Esc up front (still inside the user gesture), and again once the
-      // browser confirms fullscreen, so a tap of Esc reaches the game.
-      lockEsc();
-      var el = document.documentElement;
-      var p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
-      if (p && p.then) p.then(lockEsc, function () {});
-    }
-  }
-  function onFsChange() {
+  // -------------------------------------------------------------- "maximize"
+  // CSS-only fill-the-window instead of the Fullscreen API. The browser then
+  // never reserves Esc, so Esc stays a normal in-game key. (True fullscreen
+  // would hide the browser chrome but make Esc leave fullscreen, which Brave
+  // does not let us intercept via the Keyboard Lock API.)
+  var maximized = false;
+  function toggleMax() {
+    maximized = !maximized;
+    document.body.classList.toggle('fs', maximized);
     resize();
-    if (isFs()) lockEsc(); else unlockEsc();
   }
 
   // --------------------------------------------------------------- settings
@@ -54,11 +33,10 @@
   }
 
   function resize() {
-    var fs = isFs();
-    document.body.classList.toggle('fs', fs);
+    var fs = maximized;
     var canvas = document.getElementById('crt');
-    var availW = window.innerWidth - (fs ? 0 : 110);
-    var availH = window.innerHeight - (fs ? 0 : 150);
+    var availW = window.innerWidth - (fs ? 6 : 110);
+    var availH = window.innerHeight - (fs ? 6 : 150);
     var scale = Math.max(0.4, Math.min(availW / 800, availH / 480));
     var w = Math.floor(800 * scale), h = Math.floor(480 * scale);
     canvas.style.width = w + 'px';
@@ -209,12 +187,12 @@
       ['c', 'Life colours: ' + (SETTINGS.lifeColors ? 'On (2nd life purple, 3rd red)' : 'Off')],
       ['d', 'Theme       : ' + (SETTINGS.theme === 'dark' ? 'Dark room' : 'Light room')],
       ['e', 'Music       : ' + (SETTINGS.music ? 'On' : 'Off')],
-      ['f', 'Fullscreen  : toggle (F11; Shift+Esc leaves)']
+      ['f', 'Maximize    : fill the window (F11 / Shift+Esc)']
     ];
     for (var i = 0; i < rows.length; i++) {
       term.str(x0 + 3, 6 + i * 2, rows[i][0] + ') ' + rows[i][1]);
     }
-    term.str(x0 + 3, 19, 'F1/SPACE back · in fullscreen, Esc goes to the game', true);
+    term.str(x0 + 3, 19, 'F1/SPACE back · Esc is an in-game key (not maximize)', true);
   }
   function menuKey(k) {
     if (k === 'Escape' || k === 'F1' || k === ' ') { menuOpen = false; return; }
@@ -224,7 +202,7 @@
       case 'c': SETTINGS.lifeColors = !SETTINGS.lifeColors; break;
       case 'd': SETTINGS.theme = SETTINGS.theme === 'dark' ? 'light' : 'dark'; break;
       case 'e': SETTINGS.music = !SETTINGS.music; break;
-      case 'f': toggleFs(); break;
+      case 'f': toggleMax(); break;
       default: return;
     }
     SETTINGS.changed();
@@ -236,8 +214,8 @@
   function onKey(e) {
     if (!audioReady && window.AudioSys) { AudioSys.unlock(); audioReady = true; }
     if (window.AudioSys) AudioSys.setMusic(SETTINGS.music);
-    // Shift+Esc leaves fullscreen; Esc alone stays reserved for the game.
-    if (e.key === 'Escape' && e.shiftKey) { stop(e); if (isFs()) toggleFs(); return; }
+    // Shift+Esc toggles the maximized view; Esc alone is a normal game key.
+    if (e.key === 'Escape' && e.shiftKey) { stop(e); toggleMax(); return; }
     // On the end-of-game screen, any key reloads to continue (no F5 needed) --
     // but only once the save has been written (exitMsg set), never mid-save.
     if (exited) { stop(e); if (exitMsg) location.reload(); return; }
@@ -250,7 +228,7 @@
         SETTINGS.changed(); applySettings(); return;
       case 'F4': stop(e); SETTINGS.music = !SETTINGS.music;
         SETTINGS.changed(); applySettings(); return;
-      case 'F11': stop(e); toggleFs(); return;
+      case 'F11': stop(e); toggleMax(); return;
     }
     if (menuOpen) { stop(e); menuKey(e.key); return; }
     // every other key falls through to the engine's own keydown handler
@@ -281,8 +259,6 @@
     applySettings();
     resize();
     window.addEventListener('resize', resize);
-    document.addEventListener('fullscreenchange', onFsChange);
-    document.addEventListener('webkitfullscreenchange', onFsChange);
     window.addEventListener('keydown', onKey, true); // capture, before the engine
     var gear = document.getElementById('gear');
     if (gear) gear.addEventListener('click', function () {
