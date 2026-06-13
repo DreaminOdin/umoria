@@ -13,25 +13,36 @@
 
   // -------------------------------------------------------------- fullscreen
   function isFs() { return !!(document.fullscreenElement || document.webkitFullscreenElement); }
-  function toggleFs() {
-    if (isFs()) {
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    } else {
-      var el = document.documentElement;
-      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
-    }
-  }
   // In fullscreen, capture Esc (Chromium Keyboard Lock API) so a short tap
   // reaches Umoria instead of leaving fullscreen. Esc alone then goes to the
   // game; Shift+Esc / F11 / holding Esc leave fullscreen.
-  function applyKeyboardLock() {
-    if (!navigator.keyboard || !navigator.keyboard.lock) return;
-    try {
-      if (isFs()) navigator.keyboard.lock(['Escape']).catch(function () {});
-      else if (navigator.keyboard.unlock) navigator.keyboard.unlock();
-    } catch (e) {}
+  function lockEsc() {
+    if (navigator.keyboard && navigator.keyboard.lock) {
+      try { navigator.keyboard.lock(['Escape']).catch(function () {}); } catch (e) {}
+    }
   }
-  function onFsChange() { resize(); applyKeyboardLock(); }
+  function unlockEsc() {
+    if (navigator.keyboard && navigator.keyboard.unlock) {
+      try { navigator.keyboard.unlock(); } catch (e) {}
+    }
+  }
+  function toggleFs() {
+    if (isFs()) {
+      unlockEsc();
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      // Lock Esc up front (still inside the user gesture), and again once the
+      // browser confirms fullscreen, so a tap of Esc reaches the game.
+      lockEsc();
+      var el = document.documentElement;
+      var p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      if (p && p.then) p.then(lockEsc, function () {});
+    }
+  }
+  function onFsChange() {
+    resize();
+    if (isFs()) lockEsc(); else unlockEsc();
+  }
 
   // --------------------------------------------------------------- settings
   function applySettings() {
