@@ -28,6 +28,7 @@ an options menu.
 - [What is this?](#what-is-this)
 - [The history of Moria](#the-history-of-moria)
 - [Play](#play)
+- [Install as an app](#install-as-an-app)
 - [Controls](#controls)
 - [Personal extensions](#personal-extensions)
 - [Music & voices](#music--voices)
@@ -88,6 +89,21 @@ Goal: descend 50 levels (2500 feet) into the Mines of Moria and slay the
 town with shops and **haggling**, procedurally generated dungeons, traps, magic,
 item identification and everything else that makes Umoria.
 
+### Install as an app
+
+For a distraction-free, fullscreen-like view with **no browser tabs, address bar
+or bookmarks bar** — just a thin black title bar — install the page as an app (PWA):
+
+1. Open https://dreaminodin.github.io/umoria/ and click the **install icon** in the
+   address bar (a small monitor with a downward arrow), or use the browser menu
+   → *Install Umoria…*.
+2. It opens in its own window. Press **F11** or **Shift+Esc** to fill it.
+
+Because it is a normal app window (not the browser’s Fullscreen API), **`Esc` still
+works as an in-game key**. Installing changes nothing about your browser, and the
+app can be uninstalled any time. (This is the clean way to hide the browser chrome:
+a web page cannot recolour or hide the browser’s own tab/address bars itself.)
+
 ### Controls
 
 The **original Umoria keys** apply. In game, press **`?`** for the full command
@@ -111,7 +127,7 @@ list and **`H`** for help/identity. Quick overview:
 | **F2** | Phosphor colour: amber / green / white |
 | **F3** | Display: CRT (authentic) ↔ Sharp (modern, crisp) |
 | **F4** | Music on/off |
-| **F11** | Fullscreen (picture only) — in fullscreen, `Esc` goes to the game; **`Shift+Esc`** (or holding `Esc`) leaves fullscreen |
+| **F11** / **Shift+Esc** | Maximize — fill the browser window. It is *not* real fullscreen, so **`Esc` stays an in-game key**. For a window with no browser bars, [install as an app](#install-as-an-app) |
 
 All settings are saved in the browser (localStorage). The options menu also has a
 **dark/light mode** for dark or bright rooms and a toggle for the life colours.
@@ -281,6 +297,7 @@ Optionsmenü.
 - [Was ist das?](#was-ist-das)
 - [Die Geschichte von Moria](#die-geschichte-von-moria)
 - [Spielen](#spielen)
+- [Als App installieren](#als-app-installieren)
 - [Steuerung](#steuerung)
 - [Persönliche Erweiterungen](#persönliche-erweiterungen)
 - [Musik & Stimmen](#musik--stimmen)
@@ -342,6 +359,23 @@ Ziel: Steige 50 Ebenen (2500 Fuß) in die Minen von Moria hinab und erschlage de
 Attribute), Stadt mit Läden samt **Feilschen**, prozeduralen Dungeons, Fallen,
 Magie, Identifikation und allem, was Umoria ausmacht.
 
+### Als App installieren
+
+Für eine ablenkungsfreie, vollbild-ähnliche Ansicht **ohne Tab-, Adress- und
+Lesezeichen-Leiste** — nur eine schmale schwarze Titelleiste — installiere die
+Seite als App (PWA):
+
+1. https://dreaminodin.github.io/umoria/ öffnen und in der Adressleiste auf das
+   **Installieren-Symbol** klicken (kleiner Monitor mit Pfeil nach unten), oder
+   über das Browser-Menü → *Umoria installieren…*.
+2. Sie öffnet sich in einem eigenen Fenster. **F11** oder **Shift+Esc** füllt es.
+
+Da es ein normales App-Fenster ist (kein echtes Browser-Vollbild), **funktioniert
+`Esc` weiterhin als Spieltaste**. Die Installation ändert nichts an deinem Browser
+und lässt sich jederzeit wieder deinstallieren. (Das ist der saubere Weg, den
+Browser-Rahmen loszuwerden — eine Webseite kann die Tab-/Adressleisten des Browsers
+nicht selbst umfärben oder ausblenden.)
+
 ### Steuerung
 
 Es gelten die **Original-Umoria-Tasten**. Im Spiel **`?`** für die vollständige
@@ -365,7 +399,7 @@ Befehlsliste, **`H`** für Hilfe/Identität. Kurzüberblick:
 | **F2** | Phosphor-Farbe: Amber / Grün / Weiß |
 | **F3** | Anzeige: CRT (authentisch) ↔ Sharp (modern, gestochen scharf) |
 | **F4** | Musik an/aus |
-| **F11** | Vollbild (nur das Bild) — im Vollbild geht `Esc` ins Spiel; **`Shift+Esc`** (oder `Esc` halten) verlässt das Vollbild |
+| **F11** / **Shift+Esc** | Maximieren — füllt das Browserfenster. *Kein* echtes Vollbild, daher bleibt **`Esc` eine Spieltaste**. Für ein Fenster ohne Browser-Leisten: [Als App installieren](#als-app-installieren) |
 
 Alle Einstellungen werden im Browser gespeichert (localStorage). Im Optionsmenü
 zusätzlich **Dark/Light-Modus** für dunkle bzw. helle Räume und ein Schalter für
