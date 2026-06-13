@@ -21,6 +21,17 @@
       (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
     }
   }
+  // In fullscreen, capture Esc (Chromium Keyboard Lock API) so a short tap
+  // reaches Umoria instead of leaving fullscreen. Esc alone then goes to the
+  // game; Shift+Esc / F11 / holding Esc leave fullscreen.
+  function applyKeyboardLock() {
+    if (!navigator.keyboard || !navigator.keyboard.lock) return;
+    try {
+      if (isFs()) navigator.keyboard.lock(['Escape']).catch(function () {});
+      else if (navigator.keyboard.unlock) navigator.keyboard.unlock();
+    } catch (e) {}
+  }
+  function onFsChange() { resize(); applyKeyboardLock(); }
 
   // --------------------------------------------------------------- settings
   function applySettings() {
@@ -187,12 +198,12 @@
       ['c', 'Life colours: ' + (SETTINGS.lifeColors ? 'On (2nd life purple, 3rd red)' : 'Off')],
       ['d', 'Theme       : ' + (SETTINGS.theme === 'dark' ? 'Dark room' : 'Light room')],
       ['e', 'Music       : ' + (SETTINGS.music ? 'On' : 'Off')],
-      ['f', 'Fullscreen  : toggle (or F11)']
+      ['f', 'Fullscreen  : toggle (F11; Shift+Esc leaves)']
     ];
     for (var i = 0; i < rows.length; i++) {
       term.str(x0 + 3, 6 + i * 2, rows[i][0] + ') ' + rows[i][1]);
     }
-    term.str(x0 + 3, 19, 'F1/SPACE/ESC back · F2 F3 F4 are shortcuts', true);
+    term.str(x0 + 3, 19, 'F1/SPACE back · in fullscreen, Esc goes to the game', true);
   }
   function menuKey(k) {
     if (k === 'Escape' || k === 'F1' || k === ' ') { menuOpen = false; return; }
@@ -214,6 +225,8 @@
   function onKey(e) {
     if (!audioReady && window.AudioSys) { AudioSys.unlock(); audioReady = true; }
     if (window.AudioSys) AudioSys.setMusic(SETTINGS.music);
+    // Shift+Esc leaves fullscreen; Esc alone stays reserved for the game.
+    if (e.key === 'Escape' && e.shiftKey) { stop(e); if (isFs()) toggleFs(); return; }
     // On the end-of-game screen, any key reloads to continue (no F5 needed) --
     // but only once the save has been written (exitMsg set), never mid-save.
     if (exited) { stop(e); if (exitMsg) location.reload(); return; }
@@ -257,8 +270,8 @@
     applySettings();
     resize();
     window.addEventListener('resize', resize);
-    document.addEventListener('fullscreenchange', resize);
-    document.addEventListener('webkitfullscreenchange', resize);
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
     window.addEventListener('keydown', onKey, true); // capture, before the engine
     var gear = document.getElementById('gear');
     if (gear) gear.addEventListener('click', function () {

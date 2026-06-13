@@ -111,7 +111,7 @@ list and **`H`** for help/identity. Quick overview:
 | **F2** | Phosphor colour: amber / green / white |
 | **F3** | Display: CRT (authentic) ↔ Sharp (modern, crisp) |
 | **F4** | Music on/off |
-| **F11** | Fullscreen (picture only) |
+| **F11** | Fullscreen (picture only) — in fullscreen, `Esc` goes to the game; **`Shift+Esc`** (or holding `Esc`) leaves fullscreen |
 
 All settings are saved in the browser (localStorage). The options menu also has a
 **dark/light mode** for dark or bright rooms and a toggle for the life colours.
@@ -365,7 +365,7 @@ Befehlsliste, **`H`** für Hilfe/Identität. Kurzüberblick:
 | **F2** | Phosphor-Farbe: Amber / Grün / Weiß |
 | **F3** | Anzeige: CRT (authentisch) ↔ Sharp (modern, gestochen scharf) |
 | **F4** | Musik an/aus |
-| **F11** | Vollbild (nur das Bild) |
+| **F11** | Vollbild (nur das Bild) — im Vollbild geht `Esc` ins Spiel; **`Shift+Esc`** (oder `Esc` halten) verlässt das Vollbild |
 
 Alle Einstellungen werden im Browser gespeichert (localStorage). Im Optionsmenü
 zusätzlich **Dark/Light-Modus** für dunkle bzw. helle Räume und ein Schalter für
